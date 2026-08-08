@@ -8,3 +8,10 @@
 ## Code
 - Follow `_bmad-output/planning-artifacts/architecture/architecture-screeps_ai-2026-08-07/ARCHITECTURE-SPINE.md` — AD-1..AD-10 are binding.
 - All MVP constants live in `src/config.ts`; never hardcode tunables.
+
+## Model routing
+- **dev-story / dev-auto** → run on the Cline `bm-dev` profile (cheap/free model).
+- **code-review / tea** (bmad-tea, bmad-testarch-*) → run on the Cline `bm-review` profile (smart model).
+- Before invoking code-review or any bmad-tea / bmad-testarch-* skill, confirm the `bm-review` profile is active; if `bm-dev` is active, ask Fliko to switch before proceeding.
+- After dev-story / dev-auto completes, remind Fliko to switch to `bm-review` before running code-review or tea.
+- Record the model used in each story's Dev Agent Record ("Agent Model Used") for audit.

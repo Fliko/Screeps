@@ -1,0 +1,104 @@
+# generated: 2026-08-08
+# last_updated: 2026-08-08
+# project: screeps_ai
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; sprint-status surfaces open ones
+
+generated: 2026-08-08
+last_updated: 2026-08-08
+project: screeps_ai
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  # Epic 1: Walking Skeleton — Build, Deploy, Tick
+  epic-1: in-progress
+  1-1-repository-toolchain-scaffold: review
+  1-2-bundle-sim-deploy: backlog
+  1-3-shard-push: backlog
+  1-4-control-cycle-skeleton-with-logging-cpu-metering: backlog
+  epic-1-retrospective: optional
+
+  # Epic 2: The Job Board — the Colony Sees Its Work
+  epic-2: backlog
+  2-1-world-snapshot-game-read-seam: backlog
+  2-2-job-contract-types-per-tick-board-registry: backlog
+  2-3-producers-policy-table: backlog
+  2-4-distance-service-sim-room-board-visibility: backlog
+  epic-2-retrospective: optional
+
+  # Epic 3: Dispatch — Creeps Claim and Keep Work
+  epic-3: backlog
+  3-1-contract-memory-schema: backlog
+  3-2-taken-set-derivation: backlog
+  3-3-validators: backlog
+  3-4-matching-claim-lock: backlog
+  3-5-movement-choke-point-stuck-escalation: backlog
+  3-6-cycle-wiring-wipe-recovery: backlog
+  epic-3-retrospective: optional
+
+  # Epic 4: The Generalist Economy — the Colony Sustains Itself
+  epic-4: backlog
+  4-1-behavior-frame-the-sourcing-rule: backlog
+  4-2-fill-behavior: backlog
+  4-3-build-behavior: backlog
+  4-4-upgrade-behavior: backlog
+  4-5-dying-unload-economy-observation: backlog
+  epic-4-retrospective: optional
+
+  # Epic 5: Spawn Management — the Colony Replaces Itself
+  epic-5: backlog
+  5-1-population-maintenance-the-spawncreep-issuer: backlog
+  5-2-proactive-ttl-replacement: backlog
+  5-3-body-selection-affordability: backlog
+  5-4-spawn-priority-ordering-colony-observation: backlog
+  epic-5-retrospective: optional
+
+  # Epic 6: Evolution — Graduation to Specialists (MVP exit)
+  epic-6: backlog
+  6-1-era-derivation-in-the-snapshot: backlog
+  6-2-mine-producer-era-gating: backlog
+  6-3-container-first-construction: backlog
+  6-4-reserved-slot-spawning-specialist-bodies: backlog
+  6-5-harvester-behavior: backlog
+  6-6-collector-behavior: backlog
+  6-7-deprecation-graceful-degradation: backlog
+  6-8-evolution-observation-mvp-exit: backlog
+  epic-6-retrospective: optional

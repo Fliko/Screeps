@@ -1,0 +1,22 @@
+{
+  "name": "screeps_ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Screeps colony bot — Blackboard engine (MVP)",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src test scripts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.7",
+    "@types/screeps": "3.4.0",
+    "esbuild": "0.28.1",
+    "screeps-api": "2.1.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
+  }
+}
