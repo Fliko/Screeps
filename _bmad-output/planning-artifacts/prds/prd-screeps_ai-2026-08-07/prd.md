@@ -21,7 +21,7 @@ updated: 2026-08-07
 
 The bot is also a deliberate learning vehicle. Every concept it embodies — blackboard scheduling, capacity reservation, backfill, TTL-aware assignment — is designed at the concept level and implemented under the author's direction. The process is production-grade on purpose: a real PRD, real architecture, small reviewable features, no vibe-coded mush. AI writes the code; the human directs, reviews every diff, and owns every commit.
 
-Success shows up on two scoreboards. In game: the bot climbs to the **top of the shard leaderboard** and stays there, unattended, through evolutions that would stall lesser colonies. Out of game: an engineer who can point at a running, evolving system and truthfully say *"I designed and built every piece of that myself."*
+Success shows up on two scoreboards. In game: the bot climbs to the **top of the shard leaderboard** and stays there, unattended, through evolutions that would stall lesser colonies. Out of game: an engineer who can point at a running, evolving system and truthfully say *"I designed and directed every piece of that myself."*
 
 ## 2. Target User
 
