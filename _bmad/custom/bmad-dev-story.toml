@@ -1,0 +1,6 @@
+# Personal/team override for bmad-dev-story — appended to the skill's persistent_facts.
+
+[workflow]
+persistent_facts = [
+  "Git governance: the agent NEVER runs git-mutating commands (commit/push/tag/merge/rebase/reset). Read-only git (status, diff, log, rev-parse) is allowed — use it for baseline_commit. The human performs every commit; a pre-commit hook enforces this. Never use --no-verify or attempt any bypass.",
+]

@@ -1,0 +1,9 @@
+#!/bin/sh
+# screeps_ai: agents never commit — the human commits with ALLOW_COMMIT set.
+# Enable with: git config core.hooksPath .githooks
+if [ -z "$ALLOW_COMMIT" ]; then
+  echo "pre-commit: commits are disabled for agents in this repository."
+  echo "Human operator: commit with  ALLOW_COMMIT=1 git commit ..."
+  exit 1
+fi
+exit 0

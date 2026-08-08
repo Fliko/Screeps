@@ -1,0 +1,10 @@
+# Project rules for AI agents (screeps_ai)
+
+## Git governance
+- **NEVER run git-mutating commands**: no `commit`, `push`, `tag`, `merge`, `rebase`, `reset --hard`, `checkout --`, `branch -d`, etc. Read-only git is allowed: `status`, `diff`, `log`, `rev-parse`, `show`.
+- **The human performs every commit.** A pre-commit hook enforces this mechanically — never attempt to bypass it (no `--no-verify`, no `ALLOW_COMMIT` manipulation, no hook editing).
+- When a workflow needs a commit reference (e.g. `baseline_commit`), use read-only `git rev-parse HEAD`.
+
+## Code
+- Follow `_bmad-output/planning-artifacts/architecture/architecture-screeps_ai-2026-08-07/ARCHITECTURE-SPINE.md` — AD-1..AD-10 are binding.
+- All MVP constants live in `src/config.ts`; never hardcode tunables.
