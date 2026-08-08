@@ -50,8 +50,8 @@ story_location: _bmad-output/implementation-artifacts
 development_status:
   # Epic 1: Walking Skeleton — Build, Deploy, Tick
   epic-1: in-progress
-  1-1-repository-toolchain-scaffold: review
-  1-2-bundle-sim-deploy: backlog
+  1-1-repository-toolchain-scaffold: done
+  1-2-bundle-sim-deploy: done
   1-3-shard-push: backlog
   1-4-control-cycle-skeleton-with-logging-cpu-metering: backlog
   epic-1-retrospective: optional

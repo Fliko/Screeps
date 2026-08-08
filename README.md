@@ -25,7 +25,8 @@ Typecheck runs **TypeScript 7.0.2** in `strict` mode against `@types/screeps` 3.
 - `npm run typecheck` — `tsc --noEmit`
 - `npm run lint` — `biome check src test scripts`
 - `npm run test` — `vitest run`
-- Build/push scripts arrive in Stories 1.2/1.3.
+- `npm run build` — esbuild `src/main.ts` → `dist/main.js` (CJS, ES2022, dev build — Story 1.2)
+- The `push` script arrives with Story 1.3 (`scripts/push.ts`); `watch` is out of MVP scope.
 
 ## Structure
 
