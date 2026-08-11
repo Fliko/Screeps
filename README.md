@@ -38,4 +38,12 @@ Hand-rolled from zero — no `screeps-typescript-starter` or boilerplate — so 
 
 ## Deploy
 
-Two environments: the official simulation room (bundle pasted in) and the official World shard (`npm run push`, token in gitignored `screeps.json`). No private server in MVP.
+Official shard push uses Grunt. Fill in `screeps.json` (gitignored; copy from `screeps.json.example`), then:
+
+```bash
+npm run push         # official world (env=main)
+npm run push:ptr     # PTR
+npm run push:private # local/private server
+```
+
+Override branch: `npm run push -- --branch=experiment`. Simulation room still works by pasting `dist/main.js` from `npm run build`. Private server support is pre-wired in `screeps.json` example.

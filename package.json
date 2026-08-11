@@ -8,14 +8,20 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src test scripts",
+    "lint": "biome check src test scripts Gruntfile.js",
     "test": "vitest run",
-    "build": "esbuild src/main.ts --bundle --format=cjs --target=es2022 --outfile=dist/main.js"
+    "build": "esbuild src/main.ts --bundle --format=cjs --target=es2022 --outfile=dist/main.js",
+    "push": "grunt --env=main",
+    "push:ptr": "grunt --env=ptr",
+    "push:private": "grunt --env=private"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",
     "@types/screeps": "3.4.0",
     "esbuild": "0.28.1",
+    "grunt": "1.6.1",
+    "grunt-contrib-clean": "2.0.1",
+    "grunt-screeps": "1.5.0",
     "screeps-api": "2.1.0",
     "typescript": "7.0.2",
     "vitest": "4.1.10"

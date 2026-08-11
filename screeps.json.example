@@ -1,0 +1,22 @@
+{
+  "main": {
+    "email": "YOUR_EMAIL",
+    "password": "YOUR_PASSWORD",
+    "branch": "default"
+  },
+  "ptr": {
+    "email": "YOUR_EMAIL",
+    "password": "YOUR_PASSWORD",
+    "branch": "default",
+    "ptr": true
+  },
+  "private": {
+    "email": "YOUR_EMAIL",
+    "password": "YOUR_PASSWORD",
+    "protocol": "http",
+    "hostname": "127.0.0.1",
+    "port": 21025,
+    "path": "/api/user/code",
+    "branch": "default"
+  }
+}
