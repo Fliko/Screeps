@@ -60,7 +60,7 @@ development_status:
   epic-2: in-progress
   2-1-world-snapshot-game-read-seam: done
   2-2-job-contract-types-per-tick-board-registry: done
-  2-3-producers-policy-table: backlog
+  2-3-producers-policy-table: done
   2-4-distance-service-sim-room-board-visibility: backlog
   epic-2-retrospective: optional
 
