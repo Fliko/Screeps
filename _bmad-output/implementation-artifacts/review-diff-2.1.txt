@@ -1,0 +1,897 @@
+diff --git a/_bmad-output/implementation-artifacts/sprint-status.yaml b/_bmad-output/implementation-artifacts/sprint-status.yaml
+index 774099b..dd5387e 100644
+--- a/_bmad-output/implementation-artifacts/sprint-status.yaml
++++ b/_bmad-output/implementation-artifacts/sprint-status.yaml
+@@ -49,7 +49,7 @@ story_location: _bmad-output/implementation-artifacts
+ 
+ development_status:
+   # Epic 1: Walking Skeleton — Build, Deploy, Tick
+-  epic-1: in-progress
++  epic-1: done
+   1-1-repository-toolchain-scaffold: done
+   1-2-bundle-sim-deploy: done
+   1-3-shard-push: done
+@@ -57,8 +57,8 @@ development_status:
+   epic-1-retrospective: done
+ 
+   # Epic 2: The Job Board — the Colony Sees Its Work
+-  epic-2: backlog
+-  2-1-world-snapshot-game-read-seam: backlog
++  epic-2: in-progress
++  2-1-world-snapshot-game-read-seam: review
+   2-2-job-contract-types-per-tick-board-registry: backlog
+   2-3-producers-policy-table: backlog
+   2-4-distance-service-sim-room-board-visibility: backlog
+diff --git a/src/control/generate.ts b/src/control/generate.ts
+index 87dc20f..bd24678 100644
+--- a/src/control/generate.ts
++++ b/src/control/generate.ts
+@@ -1,4 +1,6 @@
+-/** AD-9: generate phase — Producers emit Jobs onto the Board */
++/** AD-9: generate phase — build the per-Tick world snapshot for Producers */
++import { buildWorldSnapshot } from "../world/snapshot";
++
+ export function generate(): void {
+-  // Empty implementation — logic arrives in Epic 2
++  buildWorldSnapshot();
+ }
+diff --git a/src/game.ts b/src/game.ts
+index 9ce6f05..1c41d53 100644
+--- a/src/game.ts
++++ b/src/game.ts
+@@ -2,12 +2,93 @@
+  * Game adapter interface — abstracts Screeps Game global for testability.
+  * Production uses the real Game global; tests inject mocks via setGame().
+  * Story 1.4: CPU metering uses cpu.getUsed().
+- * Epic 2+: AD-10 world-read seam (find/look/getObjectById/terrain) will extend this.
++ * Story 2.1: AD-10 world-read seam (find/look/getObjectById/terrain) lives here.
++ * No Game API reads outside world/ and this adapter.
+  */
++
++declare global {
++  interface CreepMemory {
++    contract?: string;
++  }
++}
++
++export interface RoomPositionData {
++  x: number;
++  y: number;
++  roomName: string;
++}
++
++export interface StructureStub {
++  id: string;
++  pos: RoomPositionData;
++  structureType: StructureConstant;
++  energy: number;
++  energyCapacity: number;
++}
++
++export interface ConstructionSiteStub {
++  id: string;
++  pos: RoomPositionData;
++  structureType: BuildableStructureConstant;
++  progress: number;
++  progressTotal: number;
++}
++
++export interface ControllerStub {
++  id: string;
++  pos: RoomPositionData;
++  level: number;
++  progress: number;
++  progressTotal: number;
++  owner?: string;
++}
++
++export interface CreepStub {
++  id: string;
++  pos: RoomPositionData;
++  body: BodyPartConstant[];
++  ttl: number;
++  carry: number;
++  carryCapacity: number;
++  memory: { contract?: string };
++}
++
++export interface TerrainStub {
++  get(x: number, y: number): number;
++}
++
+ export interface GameAdapter {
+   cpu: {
+     getUsed(): number;
+   };
++  /** Return visible room names. */
++  getRooms(): string[];
++  /** Return energy-storing structures (Spawn, Extension, Container, etc.). */
++  findMyStructures(roomName: string): StructureStub[];
++  /** Return all construction sites in the room. */
++  findConstructionSites(roomName: string): ConstructionSiteStub[];
++  /** Return my creeps in the room. */
++  findCreeps(roomName: string): CreepStub[];
++  /** Return the room controller if one exists and is visible. */
++  getController(roomName: string): ControllerStub | undefined;
++  /** Return terrain lookup for the room. */
++  getTerrain(roomName: string): TerrainStub;
++  /** Resolve any object by its Screeps id. */
++  getObjectById<T extends _HasId>(id: Id<T> | string): T | null;
++}
++
++function toPos(pos: RoomPosition): RoomPositionData {
++  return { x: pos.x, y: pos.y, roomName: pos.roomName };
++}
++
++function isEnergyStructure(
++  structure: AnyOwnedStructure,
++): structure is AnyOwnedStructure & { energy: number; energyCapacity: number } {
++  return (
++    structure.structureType !== STRUCTURE_CONTROLLER &&
++    "energyCapacity" in structure &&
++    (structure as StructureSpawn).energyCapacity > 0
++  );
+ }
+ 
+ /**
+@@ -18,6 +99,61 @@ const defaultGame: GameAdapter = {
+   cpu: {
+     getUsed: () => Game.cpu.getUsed(),
+   },
++  getRooms: () => Object.keys(Game.rooms),
++  findMyStructures: (roomName: string): StructureStub[] => {
++    const room = Game.rooms[roomName];
++    if (!room) return [];
++    return room
++      .find(FIND_MY_STRUCTURES)
++      .filter(isEnergyStructure)
++      .map((structure) => ({
++        id: structure.id,
++        pos: toPos(structure.pos),
++        structureType: structure.structureType,
++        energy: structure.energy,
++        energyCapacity: structure.energyCapacity,
++      }));
++  },
++  findConstructionSites: (roomName: string): ConstructionSiteStub[] => {
++    const room = Game.rooms[roomName];
++    if (!room) return [];
++    return room.find(FIND_CONSTRUCTION_SITES).map((site) => ({
++      id: site.id,
++      pos: toPos(site.pos),
++      structureType: site.structureType,
++      progress: site.progress,
++      progressTotal: site.progressTotal,
++    }));
++  },
++  findCreeps: (roomName: string): CreepStub[] => {
++    const room = Game.rooms[roomName];
++    if (!room) return [];
++    return room.find(FIND_MY_CREEPS).map((creep) => ({
++      id: creep.id,
++      pos: toPos(creep.pos),
++      body: creep.body.map((part) => part.type),
++      ttl: creep.ticksToLive ?? 0,
++      carry: creep.carry.energy ?? 0,
++      carryCapacity: creep.carryCapacity,
++      memory: { contract: creep.memory.contract },
++    }));
++  },
++  getController: (roomName: string): ControllerStub | undefined => {
++    const controller = Game.rooms[roomName]?.controller;
++    if (!controller) return undefined;
++    return {
++      id: controller.id,
++      pos: toPos(controller.pos),
++      level: controller.level,
++      progress: controller.progress,
++      progressTotal: controller.progressTotal,
++      owner: controller.owner?.username,
++    };
++  },
++  getTerrain: (roomName: string): TerrainStub =>
++    Game.map.getRoomTerrain(roomName),
++  getObjectById: <T extends _HasId>(id: Id<T> | string): T | null =>
++    Game.getObjectById(id as Id<T>),
+ };
+ 
+ /**
+diff --git a/test/control-cycle.test.ts b/test/control-cycle.test.ts
+index 96a78db..aec8ed3 100644
+--- a/test/control-cycle.test.ts
++++ b/test/control-cycle.test.ts
+@@ -3,17 +3,27 @@ import type { GameAdapter } from "../src/game";
+ import { setGame } from "../src/game";
+ import type { MemoryStore } from "../src/memory";
+ import { setMemory } from "../src/memory";
++import { getCurrentSnapshot } from "../src/world/snapshot";
++
++function createMockGame(cpuGetUsed: () => number = () => 0): GameAdapter {
++  return {
++    cpu: { getUsed: cpuGetUsed },
++    getRooms: () => ["sim"],
++    findMyStructures: () => [],
++    findConstructionSites: () => [],
++    findCreeps: () => [],
++    getController: () => undefined,
++    getTerrain: () => ({ get: () => 0 }),
++    getObjectById: () => null,
++  };
++}
+ 
+ describe("Control Cycle - Phase Order (AC3)", () => {
+   let cpuUsed: number;
+-  let mockGame: GameAdapter;
+ 
+   beforeEach(async () => {
+     cpuUsed = 0;
+-    mockGame = {
+-      cpu: { getUsed: () => cpuUsed },
+-    };
+-    setGame(mockGame);
++    setGame(createMockGame());
+     vi.spyOn(console, "log").mockImplementation(() => {});
+     vi.mocked(console.log).mockClear();
+     // Reset config to defaults
+@@ -34,10 +44,12 @@ describe("Control Cycle - Phase Order (AC3)", () => {
+     vi.stubGlobal("worldSnapshot", worldSnapshot);
+ 
+     // Setup: mock Game.cpu.getUsed() to return incrementing values
+-    mockGame = {
+-      cpu: { getUsed: () => (cpuUsed += 0.5) },
+-    };
+-    setGame(mockGame);
++    setGame(
++      createMockGame(() => {
++        cpuUsed += 0.5;
++        return cpuUsed;
++      }),
++    );
+ 
+     const { loop } = await import("../src/main");
+ 
+@@ -70,6 +82,11 @@ describe("Control Cycle - Phase Order (AC3)", () => {
+ 
+     // Verify world snapshot exists (AD-10 seam placeholder)
+     expect(worldSnapshot).toBeDefined();
++
++    // Story 2.1: generate() built a real plain-data snapshot
++    const snapshot = getCurrentSnapshot();
++    expect(snapshot).toBeDefined();
++    expect(snapshot?.roomName).toBe("sim");
+   });
+ 
+   it("should not emit metering logs when CPU_METERING_ENABLED is false (AC2)", async () => {
+@@ -87,15 +104,11 @@ describe("Control Cycle - Phase Order (AC3)", () => {
+ 
+ describe("Control Cycle - Zero Colony Memory (AC4)", () => {
+   let cpuUsed: number;
+-  let mockGame: GameAdapter;
+   let memory: MemoryStore;
+ 
+   beforeEach(async () => {
+     cpuUsed = 0;
+-    mockGame = {
+-      cpu: { getUsed: () => cpuUsed },
+-    };
+-    setGame(mockGame);
++    setGame(createMockGame());
+     memory = {};
+     setMemory(memory);
+     vi.spyOn(console, "log").mockImplementation(() => {});
+@@ -109,10 +122,12 @@ describe("Control Cycle - Zero Colony Memory (AC4)", () => {
+     const config = await import("../src/config");
+     config.setConstant("CPU_METERING_ENABLED", true);
+ 
+-    mockGame = {
+-      cpu: { getUsed: () => (cpuUsed += 0.5) },
+-    };
+-    setGame(mockGame);
++    setGame(
++      createMockGame(() => {
++        cpuUsed += 0.5;
++        return cpuUsed;
++      }),
++    );
+ 
+     const { loop } = await import("../src/main");
+ 
+diff --git a/test/metering.test.ts b/test/metering.test.ts
+index 31d210d..25c0f90 100644
+--- a/test/metering.test.ts
++++ b/test/metering.test.ts
+@@ -20,6 +20,13 @@ describe("measurePhase", () => {
+     let cpuUsed = 0;
+     const mockGame: GameAdapter = {
+       cpu: { getUsed: () => (cpuUsed += 0.5) },
++      getRooms: () => ["sim"],
++      findMyStructures: () => [],
++      findConstructionSites: () => [],
++      findCreeps: () => [],
++      getController: () => undefined,
++      getTerrain: () => ({ get: () => 0 }),
++      getObjectById: () => null,
+     };
+     setGame(mockGame);
+ 
+@@ -37,6 +44,13 @@ describe("measurePhase", () => {
+ 
+     const mockGame: GameAdapter = {
+       cpu: { getUsed: () => 0 },
++      getRooms: () => ["sim"],
++      findMyStructures: () => [],
++      findConstructionSites: () => [],
++      findCreeps: () => [],
++      getController: () => undefined,
++      getTerrain: () => ({ get: () => 0 }),
++      getObjectById: () => null,
+     };
+     setGame(mockGame);
+ 
+diff --git a/test/smoke.test.ts b/test/smoke.test.ts
+index beefe32..f7ed772 100644
+--- a/test/smoke.test.ts
++++ b/test/smoke.test.ts
+@@ -1,7 +1,6 @@
+ import { beforeEach, describe, expect, test, vi } from "vitest";
+ import { getConstant } from "../src/config";
+ import type { GameAdapter } from "../src/game";
+-import { setGame } from "../src/game";
+ 
+ // Disable CPU metering so smoke tests only verify boot seam behavior,
+ // not control cycle phase logs.
+@@ -18,7 +17,7 @@ vi.mock("../src/config", async (importOriginal) => {
+ describe("boot seam (Story 1.2)", () => {
+   let captured: string[];
+ 
+-  beforeEach(() => {
++  beforeEach(async () => {
+     // Fresh module registry + console capture so each test observes a clean boot.
+     vi.resetModules();
+     vi.restoreAllMocks();
+@@ -28,12 +27,22 @@ describe("boot seam (Story 1.2)", () => {
+     });
+ 
+     // Story 1.4: the control cycle calls Game.cpu.getUsed() via metering.
++    // Story 2.1: generate() calls world-read seam via GameAdapter.
+     // Inject mock Game adapter so the smoke tests don't throw ReferenceError.
+     const mockGame: GameAdapter = {
+       cpu: {
+         getUsed: () => 0,
+       },
++      getRooms: () => ["sim"],
++      findMyStructures: () => [],
++      findConstructionSites: () => [],
++      findCreeps: () => [],
++      getController: () => undefined,
++      getTerrain: () => ({ get: () => 0 }),
++      getObjectById: () => null,
+     };
++
++    const { setGame } = await import("../src/game");
+     setGame(mockGame);
+   });
+ 
+diff --git a/_bmad-output/implementation-artifacts/2-1-world-snapshot-game-read-seam.md b/_bmad-output/implementation-artifacts/2-1-world-snapshot-game-read-seam.md
+new file mode 100644
+index 0000000..d8c06d7
+--- /dev/null
++++ b/_bmad-output/implementation-artifacts/2-1-world-snapshot-game-read-seam.md
+@@ -0,0 +1,194 @@
++---
++baseline_commit: d2ae74973a1386837ba8fd74fd3b0a602910cfab
++---
++
++# Story 2.1: World Snapshot & Game-Read Seam
++
++Status: review
++
++<!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
++
++## Story
++
++As the operator,
++I want all Game API reads confined to a `world/` module that builds one snapshot per Tick,
++So that the rest of the bot never touches the read API and stays unit-testable (AD-10).
++
++**Epic 2 — The Job Board (the Colony Sees Its Work).** Story 2.1 lays the AD-10 seam that every later Epic 2–6 feature depends on: a single, per-Tick, plain-data snapshot of the room plus a `GameAdapter` extension that is the only lawful path to `Game` reads. Story 2.2 will add Job/Contract types and the Board registry; Story 2.3 will add Producers that consume this snapshot; Story 2.4 will add the distance service and Board logging. Do **not** implement Producers, Jobs, Matching, or behaviors in this story. [Source: epics.md L208–226; ARCHITECTURE-SPINE.md AD-10]
++
++## Acceptance Criteria
++
++1. **One snapshot per Tick (AC1)** — Given the running bot, when a Tick begins, then `world/` builds exactly one `WorldSnapshot` exposing the reads the Producers need: my structures with energy stores, construction sites, the Controller, and a creep summary (id, pos, body, TTL, carry, memory.contract) — all via typed accessors. [AC: epics.md L220–222]
++2. **No Game reads outside `world/` (AC2)** — Given any module outside `world/`, when it needs world data, then it reads the snapshot or a `world/` accessor; no `find`/`look`/`getObjectById`/terrain calls exist outside `world/`. [AC: epics.md L223–225; AD-10]
++3. **Fake-snapshot unit test (AC3)** — And a vitest suite constructs a `WorldSnapshot` as plain data — no Game global, no `FIND_*` mocks, no `getObjectById` stubs — proving Producers can run against plain data in later stories. [AC: epics.md L226]
++## Tasks / Subtasks
++
++- [x] **T1 — Extend `GameAdapter` with the world-read seam (AC2)**
++  - [x] Modify `src/game.ts` to add world-read methods to `GameAdapter`:
++    - room query accessors (e.g. `getRooms(): string[]`, `getRoom(name: string): RoomSnapshotInput | undefined`)
++    - `findMyStructures(roomName: string): GameObjectStub[]`
++    - `findConstructionSites(roomName: string): GameObjectStub[]`
++    - `findCreeps(roomName: string): GameObjectStub[]`
++    - `getObjectById<T>(id: Id<T> | string): T | undefined`
++    - terrain/room-access helper used by the distance service (`getTerrain(roomName: string)`)
++  - [x] Keep the existing `cpu.getUsed()` seam and the `getGame()`/`setGame()` injection pattern unchanged.
++  - [x] Define small, read-only stub types for live objects inside `src/game.ts` so the adapter stays mockable without importing the entire Screeps API into tests.
++  - [x] Do not add write methods; `GameAdapter` is read-only for the seam (AD-2).
++
++- [x] **T2 — Define the `WorldSnapshot` interface in `src/world/snapshot.ts` (AC1, AC3)**
++  - [x] Export a `WorldSnapshot` interface that is plain data only — no live `GameObject` references.
++  - [x] Export per-entity record types:
++    - `SnapshotStructure { id, pos: RoomPositionData, structureType, energy, energyCapacity }`
++    - `SnapshotConstructionSite { id, pos, structureType, progress, progressTotal }`
++    - `SnapshotController { id, pos, level, progress, progressTotal, owner? }`
++    - `SnapshotCreep { id, pos, body: BodyPartConstant[], ttl, carry: number, carryCapacity: number, contract?: string }`
++  - [x] Use `RoomPositionData = { x: number; y: number; roomName: string }` everywhere; positions are plain data.
++  - [x] Use string-union types, not runtime enums (Spine §Consistency Conventions).
++  - [x] Keep the snapshot minimal: include only what Producers need for Story 2.3 (fill/build/upgrade; mine comes later with era). Do not add fields "just in case".
++
++- [x] **T3 — Implement `buildWorldSnapshot()` (AC1)**
++  - [x] In `src/world/snapshot.ts`, export `buildWorldSnapshot(): WorldSnapshot`.
++  - [x] The builder calls `getGame()` and reads the room through the adapter only; no direct `Game` global access.
++  - [x] The builder returns one snapshot per call; it must be callable exactly once per Tick from `generate()`.
++  - [x] Do not cache the snapshot across Ticks and do not write it to Memory (AD-3, AD-5).
++  - [x] Handle the absence of objects gracefully (empty arrays/objects), so the bot does not throw in an empty room.
++
++- [x] **T4 — Wire snapshot generation into the control cycle (AC1)**
++  - [x] Update `src/control/generate.ts` to import `buildWorldSnapshot` from `../world/snapshot`.
++  - [x] In `generate()`, call `buildWorldSnapshot()` exactly once and store the result in a module-local variable.
++  - [x] Export `getCurrentSnapshot(): WorldSnapshot | undefined` from `src/world/snapshot.ts` so other modules can read the current Tick's snapshot without passing it through every signature (this is the `world/` accessor allowed by AC2).
++  - [x] Leave `main.ts` as the control-cycle seat; do not move Game reads into `main.ts`.
++  - [x] Keep all other phase stubs empty; they will consume the snapshot in Epic 3/5.
++
++- [x] **T5 — Enforce AD-10 across the tree (AC2)**
++  - [x] Grep `src/` (excluding `src/world/` and `src/game.ts`) for `Game\.`, `FIND_`, `getObjectById`, `look`, `getTerrain`, `getRangeTo`. There should be none.
++  - [x] If any existing code outside `world/` touches `Game` reads, refactor it into `world/` or behind the adapter.
++  - [x] Add a one-line comment to `src/game.ts` documenting that world-read methods are the only lawful Game API path outside `world/`.
++
++- [x] **T6 — Add fake-snapshot unit tests (AC3)**
++  - [x] Create `test/world/snapshot.test.ts`.
++  - [x] Build a `WorldSnapshot` literal directly (plain data) and assert it satisfies the `WorldSnapshot` type.
++  - [x] Mock the extended `GameAdapter` with `setGame()`, call `buildWorldSnapshot()`, and assert the returned snapshot maps adapter data into the typed records.
++  - [x] Prove no Screeps global is needed: the test file must not use `vi.stubGlobal` or reference `Game`/`Memory` globals.
++  - [x] Update `test/control-cycle.test.ts` so its `GameAdapter` mock includes the new world-read methods (return empty rooms/creeps/structures). The existing phase-order and zero-Memory tests must still pass after Story 2.1.
++
++- [x] **T7 — Automated gates (AC1–AC3)**
++  - [x] Run `npm run typecheck`, `npm run lint`, `npm run test`, `npm run build`. All exit 0.
++  - [x] Record command outputs in the Dev Agent Record.
++
++## Dev Notes
++
++### Architecture compliance
++
++- **AD-1 (module roles):** `world/` is the only knowledge source. Do not add matching, spawn, or behavior logic here. `board/` does not exist yet (Story 2.2).
++- **AD-2 (writes owned):** `GameAdapter` only reads. The only write intents in this codebase are Creep/spawn actions; those live in `agents/` and `control/spawn` and are not part of this story.
++- **AD-3 (per-Tick derived projection):** Rebuild the snapshot from scratch every Tick. No stale snapshot, no persisted Board.
++- **AD-5 (zero colony-level persistence):** Do not add `Memory` keys. The snapshot is a runtime value only.
++- **AD-9 (control-cycle order):** `generate()` is the first phase and the right place to build the snapshot because Producers (Story 2.3) run during generate.
++- **AD-10 (Game reads only through `world/`):** This story's entire purpose. Read the rule at `ARCHITECTURE-SPINE.md L77–80`.
++
++### Source-tree components to touch
++
++- `src/game.ts` — extend `GameAdapter` with world-read seam methods; keep `cpu.getUsed()`.
++- `src/world/snapshot.ts` — new; `WorldSnapshot` type + `buildWorldSnapshot()` + `getCurrentSnapshot()`.
++- `src/world/index.ts` — optional re-export barrel; if added, keep it a pure re-export with no logic.
++- `src/control/generate.ts` — replace stub with snapshot build call.
++- `src/config.ts` — no new constants expected for this story unless a pure-data conversion helper needs one; if you add one, type it in `Config`.
++- `test/world/snapshot.test.ts` — new.
++- `test/control-cycle.test.ts` — update mock adapter.
++
++### Testing standards summary
++
++- Use vitest 4.1.10, `describe`/`it`/`expect`, and `vi` for spies only when needed.
++- Prefer typed fake adapters via `setGame()` over `vi.stubGlobal` or `vi.resetModules()`; Epic 1 retro identified `vi.stubGlobal` as brittle.
++- Tests should prove plain-data snapshots work without mocking Screeps globals.
++- Typecheck must pass under `strict` TypeScript 7.0.2 with `@types/screeps` 3.4.0.
++- Biome 2.5.7 `check src test scripts` must pass.
++
++### Previous story intelligence
++
++- Story 1.4 established `GameAdapter` (`src/game.ts`) and `MemoryStore` (`src/memory.ts`) with injectable `getGame()`/`setGame()` and `getMemory()`/`setMemory()`. Reuse that exact pattern; do not invent a new seam.
++- Story 1.4 also established `src/config.ts` typed constants with `getConstant()`/`setConstant()` for testability.
++- Story 1.4's `test/control-cycle.test.ts` used a minimal `GameAdapter` mock and `vi.stubGlobal("worldSnapshot", ...)`. Replace that stub with the real `WorldSnapshot` type and `setGame()` mock.
++- The Epic 1 retro action item "World Snapshot Interface Design (Epic 2 Prep)" is the design work this story implements; the interface must be defined before Producers consume it.
++
++### Git intelligence
++
++- Recent commits (`git log --oneline -5`):
++  - `d2ae749 ft: add metering and Game interfaces, finish epic`
++  - `2e3c0a3 ft: add push code script`
++  - `5ede80f ft: add terse AI conversations`
++  - `a33f782 ft: Story 1.2 - bundle and build runnable JS`
++  - `33aa255 ft: Story 1.1 repo and toolchain scaffolding`
++- Pattern: feature commits use `ft:` prefix; Story 1.4 introduced `src/game.ts` and `src/control/metering.ts` with adapter-based testability.
++- No uncommitted changes in the working tree at story start.
++
++### Project Structure Notes
++
++- Align with the spine's Structural Seed: `src/world/` holds snapshot + Game reads; `src/world/producers/` is empty until Story 2.3.
++- Do not create a top-level `src/snapshot/` or `src/adapters/world.ts`; keep the seam inside `src/world/` and `src/game.ts`.
++- The build output is `dist/main.js` via esbuild; the bundle must still export `loop()` unchanged.
++
++### Anti-patterns to avoid
++
++- Do not store live `GameObject` references in `WorldSnapshot`; cache ids/plain data only (AD-6).
++- Do not call `Game.*` directly from `control/`, `agents/`, `board/`, or `state/`.
++- Do not use runtime enums for `StructureConstant`, `BodyPartConstant`, or job types; use string unions.
++- Do not implement Producers, Jobs, Board, Matching, or behaviors — defer to later stories.
++- Do not commit changes; Fliko owns every commit per `.clinerules`.
++
++### References
++
++- [Source: _bmad-output/planning-artifacts/epics.md#Epic 2 / Story 2.1] — ACs verbatim
++- [Source: ARCHITECTURE-SPINE.md#AD-10] — Game reads only through `world/`
++- [Source: ARCHITECTURE-SPINE.md#AD-3] — per-Tick derived projection
++- [Source: ARCHITECTURE-SPINE.md#AD-5] — zero colony-level persistence
++- [Source: ARCHITECTURE-SPINE.md#Structural Seed] — module roles
++- [Source: ARCHITECTURE-SPINE.md#Consistency Conventions] — string unions, config.ts ownership
++- [Source: _bmad-output/implementation-artifacts/1-4-control-cycle-skeleton-with-logging-cpu-metering.md] — GameAdapter pattern, control-cycle wiring
++- [Source: _bmad-output/implementation-artifacts/epic-1-retro-2026-08-12.md] — interface-based testability, AD-10 enforcement
++- [Source: src/game.ts] — existing `GameAdapter` with `cpu.getUsed()`
++- [Source: src/main.ts] — AD-9 control cycle
++
++## Dev Agent Record
++
++### Agent Model Used
++
++Cline `bm-dev` profile (per `.clinerules` model routing for dev-story).
++
++### Debug Log References
++
++- `npm run typecheck` — exit 0
++- `npm run lint` — Checked 18 files, 0 errors, exit 0
++- `npm run test` — 10 passed (4 files), exit 0
++- `npm run build` — dist/main.js 5.8kb, exit 0
++- AD-10 grep — no `Game.` / `FIND_` / `getObjectById` / `look` / `getTerrain` / `getRangeTo` outside `src/world/` and `src/game.ts`
++
++### Completion Notes List
++
++- Extended `GameAdapter` (`src/game.ts`) with typed world-read seam: `getRooms`, `findMyStructures`, `findConstructionSites`, `findCreeps`, `getController`, `getTerrain`, `getObjectById`; kept `cpu.getUsed()`.
++- Added global `CreepMemory.contract?: string` augmentation so Contract reads are typed.
++- Created `src/world/snapshot.ts` with plain-data `WorldSnapshot`, per-entity record types, `buildWorldSnapshot()`, and `getCurrentSnapshot()`.
++- Wired snapshot build into `src/control/generate.ts` so it runs once per Tick in AD-9 order.
++- Added `test/world/snapshot.test.ts` proving fake snapshots work without Game API mocks, plus `buildWorldSnapshot` mapping tests.
++- Updated `test/control-cycle.test.ts`, `test/smoke.test.ts`, and `test/metering.test.ts` with full `GameAdapter` mocks to avoid regressions.
++- Verified AD-10: no Game read calls outside `src/world/` and `src/game.ts`.
++
++### File List
++
++- `src/game.ts` (mod) — extended `GameAdapter` with world-read seam and stub types
++- `src/world/snapshot.ts` (new) — `WorldSnapshot` type, `buildWorldSnapshot()`, `getCurrentSnapshot()`
++- `src/control/generate.ts` (mod) — builds snapshot each Tick
++- `test/world/snapshot.test.ts` (new) — plain-data snapshot and build mapping tests
++- `test/control-cycle.test.ts` (mod) — updated `GameAdapter` mock, asserts snapshot built
++- `test/smoke.test.ts` (mod) — updated `GameAdapter` mock with dynamic import after `vi.resetModules()`
++- `test/metering.test.ts` (mod) — updated `GameAdapter` mocks
++- `dist/main.js` (generated) — esbuild output (5.8kb)
++- `_bmad-output/implementation-artifacts/2-1-world-snapshot-game-read-seam.md` (mod) — story record
++- `_bmad-output/implementation-artifacts/sprint-status.yaml` (mod) — status `review`
++
++### Change Log
++
++- 2026-08-12 — Story 2.1 implemented: AD-10 world-read seam, plain-data `WorldSnapshot`, fake-snapshot tests, all automated gates pass.
++
++
+diff --git a/src/world/snapshot.ts b/src/world/snapshot.ts
+new file mode 100644
+index 0000000..a3c4954
+--- /dev/null
++++ b/src/world/snapshot.ts
+@@ -0,0 +1,142 @@
++/**
++ * AD-10 world snapshot — plain-data, per-Tick view of the room.
++ * Built once per Tick by `buildWorldSnapshot()` and read by Producers,
++ * Matching, Spawn, and agents through `getCurrentSnapshot()`.
++ */
++
++import {
++  type ConstructionSiteStub,
++  type ControllerStub,
++  type CreepStub,
++  getGame,
++  type RoomPositionData,
++  type StructureStub,
++} from "../game";
++
++export interface SnapshotStructure {
++  id: string;
++  pos: RoomPositionData;
++  structureType: StructureConstant;
++  energy: number;
++  energyCapacity: number;
++}
++
++export interface SnapshotConstructionSite {
++  id: string;
++  pos: RoomPositionData;
++  structureType: BuildableStructureConstant;
++  progress: number;
++  progressTotal: number;
++}
++
++export interface SnapshotController {
++  id: string;
++  pos: RoomPositionData;
++  level: number;
++  progress: number;
++  progressTotal: number;
++  owner?: string;
++}
++
++export interface SnapshotCreep {
++  id: string;
++  pos: RoomPositionData;
++  body: BodyPartConstant[];
++  ttl: number;
++  carry: number;
++  carryCapacity: number;
++  contract?: string;
++}
++
++export interface WorldSnapshot {
++  roomName: string;
++  controller?: SnapshotController;
++  structures: SnapshotStructure[];
++  constructionSites: SnapshotConstructionSite[];
++  creeps: SnapshotCreep[];
++}
++
++let currentSnapshot: WorldSnapshot | undefined;
++
++/** Returns the snapshot for the current Tick, if one has been built. */
++export function getCurrentSnapshot(): WorldSnapshot | undefined {
++  return currentSnapshot;
++}
++
++/** Builds a fresh plain-data snapshot from the Game adapter. No caching, no Memory. */
++export function buildWorldSnapshot(): WorldSnapshot {
++  const game = getGame();
++  const rooms = game.getRooms();
++  const roomName = rooms[0] ?? "";
++
++  const snapshot: WorldSnapshot = {
++    roomName,
++    structures: [],
++    constructionSites: [],
++    creeps: [],
++  };
++
++  if (!roomName) {
++    currentSnapshot = snapshot;
++    return snapshot;
++  }
++
++  const controller = game.getController(roomName);
++  if (controller) {
++    snapshot.controller = mapController(controller);
++  }
++
++  snapshot.structures = game.findMyStructures(roomName).map(mapStructure);
++  snapshot.constructionSites = game
++    .findConstructionSites(roomName)
++    .map(mapConstructionSite);
++  snapshot.creeps = game.findCreeps(roomName).map(mapCreep);
++
++  currentSnapshot = snapshot;
++  return snapshot;
++}
++
++function mapStructure(stub: StructureStub): SnapshotStructure {
++  return {
++    id: stub.id,
++    pos: stub.pos,
++    structureType: stub.structureType,
++    energy: stub.energy,
++    energyCapacity: stub.energyCapacity,
++  };
++}
++
++function mapConstructionSite(
++  stub: ConstructionSiteStub,
++): SnapshotConstructionSite {
++  return {
++    id: stub.id,
++    pos: stub.pos,
++    structureType: stub.structureType,
++    progress: stub.progress,
++    progressTotal: stub.progressTotal,
++  };
++}
++
++function mapController(stub: ControllerStub): SnapshotController {
++  return {
++    id: stub.id,
++    pos: stub.pos,
++    level: stub.level,
++    progress: stub.progress,
++    progressTotal: stub.progressTotal,
++    owner: stub.owner,
++  };
++}
++
++function mapCreep(stub: CreepStub): SnapshotCreep {
++  return {
++    id: stub.id,
++    pos: stub.pos,
++    body: stub.body,
++    ttl: stub.ttl,
++    carry: stub.carry,
++    carryCapacity: stub.carryCapacity,
++    contract: stub.memory.contract,
++  };
++}
+diff --git a/test/world/snapshot.test.ts b/test/world/snapshot.test.ts
+new file mode 100644
+index 0000000..758afe3
+--- /dev/null
++++ b/test/world/snapshot.test.ts
+@@ -0,0 +1,169 @@
++import { beforeEach, describe, expect, it } from "vitest";
++import { type GameAdapter, setGame } from "../../src/game";
++import {
++  buildWorldSnapshot,
++  getCurrentSnapshot,
++  type WorldSnapshot,
++} from "../../src/world/snapshot";
++
++function createMockGame(overrides?: {
++  controller?: ReturnType<GameAdapter["getController"]>;
++  structures?: ReturnType<GameAdapter["findMyStructures"]>;
++  constructionSites?: ReturnType<GameAdapter["findConstructionSites"]>;
++  creeps?: ReturnType<GameAdapter["findCreeps"]>;
++}): GameAdapter {
++  return {
++    cpu: { getUsed: () => 0 },
++    getRooms: () => ["sim"],
++    getController: () => overrides?.controller ?? undefined,
++    findMyStructures: () => overrides?.structures ?? [],
++    findConstructionSites: () => overrides?.constructionSites ?? [],
++    findCreeps: () => overrides?.creeps ?? [],
++    getTerrain: () => ({ get: () => 0 }),
++    getObjectById: () => null,
++  };
++}
++
++describe("buildWorldSnapshot", () => {
++  beforeEach(() => {
++    setGame();
++  });
++
++  it("builds an empty snapshot when no rooms are visible", () => {
++    setGame({
++      ...createMockGame(),
++      getRooms: () => [],
++    });
++
++    const snapshot = buildWorldSnapshot();
++
++    expect(snapshot.roomName).toBe("");
++    expect(snapshot.structures).toHaveLength(0);
++    expect(snapshot.constructionSites).toHaveLength(0);
++    expect(snapshot.creeps).toHaveLength(0);
++    expect(snapshot.controller).toBeUndefined();
++    expect(getCurrentSnapshot()).toBe(snapshot);
++  });
++
++  it("maps the controller, structures, construction sites, and creeps", () => {
++    setGame(
++      createMockGame({
++        controller: {
++          id: "controller1" as Id<StructureController>,
++          pos: { x: 10, y: 20, roomName: "sim" },
++          level: 2,
++          progress: 100,
++          progressTotal: 1000,
++          owner: "Fliko",
++        },
++        structures: [
++          {
++            id: "spawn1" as Id<StructureSpawn>,
++            pos: { x: 5, y: 5, roomName: "sim" },
++            structureType: "spawn",
++            energy: 100,
++            energyCapacity: 300,
++          },
++          {
++            id: "ext1" as Id<StructureExtension>,
++            pos: { x: 6, y: 5, roomName: "sim" },
++            structureType: "extension",
++            energy: 50,
++            energyCapacity: 50,
++          },
++        ],
++        constructionSites: [
++          {
++            id: "site1" as Id<ConstructionSite<STRUCTURE_CONTAINER>>,
++            pos: { x: 15, y: 15, roomName: "sim" },
++            structureType: "container",
++            progress: 10,
++            progressTotal: 100,
++          },
++        ],
++        creeps: [
++          {
++            id: "creep1" as Id<Creep>,
++            pos: { x: 1, y: 1, roomName: "sim" },
++            body: ["work", "carry", "move"],
++            ttl: 100,
++            carry: 25,
++            carryCapacity: 50,
++            memory: { contract: "fill:site1" },
++          },
++        ],
++      }),
++    );
++
++    const snapshot = buildWorldSnapshot();
++
++    expect(snapshot.roomName).toBe("sim");
++
++    expect(snapshot.controller).toEqual({
++      id: "controller1",
++      pos: { x: 10, y: 20, roomName: "sim" },
++      level: 2,
++      progress: 100,
++      progressTotal: 1000,
++      owner: "Fliko",
++    });
++
++    expect(snapshot.structures).toHaveLength(2);
++    expect(snapshot.structures[0]).toEqual({
++      id: "spawn1",
++      pos: { x: 5, y: 5, roomName: "sim" },
++      structureType: "spawn",
++      energy: 100,
++      energyCapacity: 300,
++    });
++
++    expect(snapshot.constructionSites).toHaveLength(1);
++    expect(snapshot.constructionSites[0]).toEqual({
++      id: "site1",
++      pos: { x: 15, y: 15, roomName: "sim" },
++      structureType: "container",
++      progress: 10,
++      progressTotal: 100,
++    });
++
++    expect(snapshot.creeps).toHaveLength(1);
++    expect(snapshot.creeps[0]).toEqual({
++      id: "creep1",
++      pos: { x: 1, y: 1, roomName: "sim" },
++      body: ["work", "carry", "move"],
++      ttl: 100,
++      carry: 25,
++      carryCapacity: 50,
++      contract: "fill:site1",
++    });
++  });
++});
++
++describe("WorldSnapshot as plain data", () => {
++  it("accepts a literal plain-data snapshot with no Game mocks", () => {
++    const snapshot: WorldSnapshot = {
++      roomName: "sim",
++      controller: {
++        id: "controller1",
++        pos: { x: 10, y: 20, roomName: "sim" },
++        level: 1,
++        progress: 0,
++        progressTotal: 200,
++      },
++      structures: [
++        {
++          id: "spawn1",
++          pos: { x: 5, y: 5, roomName: "sim" },
++          structureType: "spawn",
++          energy: 100,
++          energyCapacity: 300,
++        },
++      ],
++      constructionSites: [],
++      creeps: [],
++    };
++
++    expect(snapshot.roomName).toBe("sim");
++    expect(snapshot.structures).toHaveLength(1);
++  });
++});

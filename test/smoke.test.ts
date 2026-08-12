@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getConstant } from "../src/config";
 import type { GameAdapter } from "../src/game";
-import { setGame } from "../src/game";
 
 // Disable CPU metering so smoke tests only verify boot seam behavior,
 // not control cycle phase logs.
@@ -18,7 +17,7 @@ vi.mock("../src/config", async (importOriginal) => {
 describe("boot seam (Story 1.2)", () => {
   let captured: string[];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Fresh module registry + console capture so each test observes a clean boot.
     vi.resetModules();
     vi.restoreAllMocks();
@@ -28,12 +27,22 @@ describe("boot seam (Story 1.2)", () => {
     });
 
     // Story 1.4: the control cycle calls Game.cpu.getUsed() via metering.
+    // Story 2.1: generate() calls world-read seam via GameAdapter.
     // Inject mock Game adapter so the smoke tests don't throw ReferenceError.
     const mockGame: GameAdapter = {
       cpu: {
         getUsed: () => 0,
       },
+      getRooms: () => ["sim"],
+      findMyStructures: () => [],
+      findConstructionSites: () => [],
+      findCreeps: () => [],
+      getController: () => undefined,
+      getTerrain: () => ({ get: () => 0 }),
+      getObjectById: () => undefined,
     };
+
+    const { setGame } = await import("../src/game");
     setGame(mockGame);
   });
 

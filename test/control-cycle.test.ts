@@ -3,17 +3,27 @@ import type { GameAdapter } from "../src/game";
 import { setGame } from "../src/game";
 import type { MemoryStore } from "../src/memory";
 import { setMemory } from "../src/memory";
+import { getCurrentSnapshot } from "../src/world/snapshot";
+
+function createMockGame(cpuGetUsed: () => number = () => 0): GameAdapter {
+  return {
+    cpu: { getUsed: cpuGetUsed },
+    getRooms: () => ["sim"],
+    findMyStructures: () => [],
+    findConstructionSites: () => [],
+    findCreeps: () => [],
+    getController: () => undefined,
+    getTerrain: () => ({ get: () => 0 }),
+    getObjectById: () => undefined,
+  };
+}
 
 describe("Control Cycle - Phase Order (AC3)", () => {
   let cpuUsed: number;
-  let mockGame: GameAdapter;
 
   beforeEach(async () => {
     cpuUsed = 0;
-    mockGame = {
-      cpu: { getUsed: () => cpuUsed },
-    };
-    setGame(mockGame);
+    setGame(createMockGame());
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.mocked(console.log).mockClear();
     // Reset config to defaults
@@ -25,19 +35,13 @@ describe("Control Cycle - Phase Order (AC3)", () => {
     const config = await import("../src/config");
     config.setConstant("CPU_METERING_ENABLED", true);
 
-    // AD-10 seam: world snapshot provides game state to phases (Epic 2+)
-    const worldSnapshot = {
-      rooms: [],
-      creeps: {},
-      structures: {},
-    };
-    vi.stubGlobal("worldSnapshot", worldSnapshot);
-
     // Setup: mock Game.cpu.getUsed() to return incrementing values
-    mockGame = {
-      cpu: { getUsed: () => (cpuUsed += 0.5) },
-    };
-    setGame(mockGame);
+    setGame(
+      createMockGame(() => {
+        cpuUsed += 0.5;
+        return cpuUsed;
+      }),
+    );
 
     const { loop } = await import("../src/main");
 
@@ -68,13 +72,18 @@ describe("Control Cycle - Phase Order (AC3)", () => {
       expect(log).toMatch(/^\[control\]/);
     });
 
-    // Verify world snapshot exists (AD-10 seam placeholder)
-    expect(worldSnapshot).toBeDefined();
+    // Story 2.1: generate() built a real plain-data snapshot
+    const snapshot = getCurrentSnapshot();
+    expect(snapshot).toBeDefined();
+    expect(snapshot?.roomName).toBe("sim");
   });
 
   it("should not emit metering logs when CPU_METERING_ENABLED is false (AC2)", async () => {
     const config = await import("../src/config");
     config.setConstant("CPU_METERING_ENABLED", false);
+
+    const { loop } = await import("../src/main");
+    loop();
 
     const logCalls = vi.mocked(console.log).mock.calls.map((call) => call[0]);
     const phaseLogs = logCalls.filter(
@@ -87,15 +96,11 @@ describe("Control Cycle - Phase Order (AC3)", () => {
 
 describe("Control Cycle - Zero Colony Memory (AC4)", () => {
   let cpuUsed: number;
-  let mockGame: GameAdapter;
   let memory: MemoryStore;
 
   beforeEach(async () => {
     cpuUsed = 0;
-    mockGame = {
-      cpu: { getUsed: () => cpuUsed },
-    };
-    setGame(mockGame);
+    setGame(createMockGame());
     memory = {};
     setMemory(memory);
     vi.spyOn(console, "log").mockImplementation(() => {});
@@ -109,10 +114,12 @@ describe("Control Cycle - Zero Colony Memory (AC4)", () => {
     const config = await import("../src/config");
     config.setConstant("CPU_METERING_ENABLED", true);
 
-    mockGame = {
-      cpu: { getUsed: () => (cpuUsed += 0.5) },
-    };
-    setGame(mockGame);
+    setGame(
+      createMockGame(() => {
+        cpuUsed += 0.5;
+        return cpuUsed;
+      }),
+    );
 
     const { loop } = await import("../src/main");
 

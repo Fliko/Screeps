@@ -20,6 +20,13 @@ describe("measurePhase", () => {
     let cpuUsed = 0;
     const mockGame: GameAdapter = {
       cpu: { getUsed: () => (cpuUsed += 0.5) },
+      getRooms: () => ["sim"],
+      findMyStructures: () => [],
+      findConstructionSites: () => [],
+      findCreeps: () => [],
+      getController: () => undefined,
+      getTerrain: () => ({ get: () => 0 }),
+      getObjectById: () => undefined,
     };
     setGame(mockGame);
 
@@ -37,6 +44,13 @@ describe("measurePhase", () => {
 
     const mockGame: GameAdapter = {
       cpu: { getUsed: () => 0 },
+      getRooms: () => ["sim"],
+      findMyStructures: () => [],
+      findConstructionSites: () => [],
+      findCreeps: () => [],
+      getController: () => undefined,
+      getTerrain: () => ({ get: () => 0 }),
+      getObjectById: () => undefined,
     };
     setGame(mockGame);
 
