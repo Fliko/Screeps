@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-08-08
-last_updated: 2026-08-11
+last_updated: 2026-08-12
 project: screeps_ai
 project_key: NOKEY
 tracking_system: file-system
@@ -52,9 +52,9 @@ development_status:
   epic-1: in-progress
   1-1-repository-toolchain-scaffold: done
   1-2-bundle-sim-deploy: done
-  1-3-shard-push: review
-  1-4-control-cycle-skeleton-with-logging-cpu-metering: backlog
-  epic-1-retrospective: optional
+  1-3-shard-push: done
+  1-4-control-cycle-skeleton-with-logging-cpu-metering: done
+  epic-1-retrospective: done
 
   # Epic 2: The Job Board — the Colony Sees Its Work
   epic-2: backlog
@@ -102,3 +102,25 @@ development_status:
   6-7-deprecation-graceful-degradation: backlog
   6-8-evolution-observation-mvp-exit: backlog
   epic-6-retrospective: optional
+
+action_items:
+  - epic: 1
+    action: "Architectural Principle: Interface-Based Testability - All Game/Memory access must go through injectable interfaces. No direct Game or Memory global access outside adapter modules."
+    owner: "Charlie (Senior Dev)"
+    status: open
+  - epic: 1
+    action: "Test-Driven Design with Interfaces - Define interfaces/seams first, then implement. Prevents testing gaps discovered after implementation."
+    owner: "Amelia (Developer)"
+    status: open
+  - epic: 1
+    action: "AD-10 Seam Enforcement - No find/look/getObjectById/terrain calls outside world/ module. Add to code review checklist."
+    owner: "Dana (QA Engineer)"
+    status: open
+  - epic: 1
+    action: "Document Interface-Based Testing Pattern - Capture the Game/Memory adapter pattern as a reference. Include examples from Epic 1."
+    owner: "Elena (Junior Dev)"
+    status: open
+  - epic: 1
+    action: "World Snapshot Interface Design (Epic 2 Prep) - Design the world snapshot interface that Producers will consume. Build on Game adapter pattern."
+    owner: "Charlie (Senior Dev)"
+    status: open

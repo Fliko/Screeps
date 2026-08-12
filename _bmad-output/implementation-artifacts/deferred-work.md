@@ -1,6 +1,9 @@
-# Deferred Work Register
+# Deferred Work
 
-## Deferred from: code review of 1-2-bundle-sim-deploy (2026-08-08)
+## Deferred from: code review of story 1.4 (2026-08-11)
 
-- **`--bundle` single-file output** — esbuild bundles only modules statically reachable from `src/main.ts`. A future module reached via dynamic import or as a non-entry file would not be emitted to `dist/`, breaking the Screeps deploy. Consistent with the current architecture (everything flows from `main.ts` as the AD-9 seat); revisit if a non-entry / dynamically-imported module is introduced. [package.json:13]
-- **Smoke-test import seam fragility** — `test/smoke.test.ts` uses `await import("../src/main")` under `vi.resetModules()`. Safe today (no module-scope side effects), but once Story 1.4 adds the five-phase control cycle with module-scope init or top-level side effects in `main.ts`, the tests would exercise an un-initialized module and report misleading results. Revisit when that story lands. [test/smoke.test.ts:17]
+- No error isolation between phases [src/main.ts:28-32] — if any phase throws, remaining phases skipped. Deferred: skeleton stage, phases empty stubs.
+- Zero Colony Memory test vacuous [test/control-cycle.test.ts:89-108] — test passes trivially because phases empty. Deferred: skeleton stage, acceptable placeholder.
+- AC1 [module] vs [control] ambiguity [src/config.ts:13] — AC1 says "[module]-prefixed" but implementation uses literal "[control]". Deferred: defensible reading.
+- Sprint-status premature [sprint-status.yaml] — status bumped to review but AC3 AD-10 seam unmet. Deferred: depends on AC3 decision.
+- NaN from getUsed() [src/control/metering.ts:8,11] — if getUsed() returns NaN, delta.toFixed(2) = "NaN". Deferred: edge case.
