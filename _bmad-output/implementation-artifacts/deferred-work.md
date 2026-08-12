@@ -14,3 +14,6 @@
 - Snapshot only captures one visible room [src/world/snapshot.ts:69-70] — MVP single-room scope; multi-room support deferred per architecture.
 - `findMyStructures` omits store-based neutral structures [src/game.ts:84-92] — `energyCapacity > 0` filter excludes Containers/Storage/Terminals; not needed until later Producer stories.
 - Snapshot omits terrain/resources needed by later Producers [src/world/snapshot.ts] — sources/minerals/terrain absent; deferred to distance/Producer stories.
+## Deferred from: code review of story 2.2 (2026-08-12)
+
+- `addJob` uninitialized guard only catches the first-Tick case; a later missed `resetBoard()` silently serves stale Board data rather than throwing [src/board/registry.ts:39-46] — deferred until Producers land in Story 2.3; fix should add a per-Tick generation marker or equivalent staleness guard.
