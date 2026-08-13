@@ -17,3 +17,9 @@
 ## Deferred from: code review of story 2.2 (2026-08-12)
 
 - `addJob` uninitialized guard only catches the first-Tick case; a later missed `resetBoard()` silently serves stale Board data rather than throwing [src/board/registry.ts:39-46] — deferred until Producers land in Story 2.3; fix should add a per-Tick generation marker or equivalent staleness guard.
+
+
+## Deferred from: code review of story 2.4 (2026-08-12)
+
+- `liveDistance` does not use `Game.getRangeTo` literally, despite AC2 wording — it delegates to the pure `chebyshevDistance`. Story T2 explicitly chose option (b) for the MVP seam, and the function is correct for same-room distances. Reconcile spec wording if future stories need actual `getRangeTo`. `[src/world/distance.ts:31]`
+- `liveDistance` does not guard against cross-room `RoomPositionData`. MVP is single-room, so this is acceptable; multi-room pathfinding is deferred to Phase 2 per architecture. `[src/world/distance.ts:31]`

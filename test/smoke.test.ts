@@ -50,8 +50,10 @@ describe("boot seam (Story 1.2)", () => {
     const { loop } = await import("../src/main");
     expect(() => loop()).not.toThrow();
     expect(() => loop()).not.toThrow();
-    expect(captured).toHaveLength(1);
-    expect(captured[0]).toBe(getConstant("LOG_BOOT"));
+    expect(captured).toContain(getConstant("LOG_BOOT"));
+    expect(
+      captured.filter((line) => line === getConstant("LOG_BOOT")),
+    ).toHaveLength(1);
   });
 
   test("loop() never throws and is a no-op after boot", async () => {
@@ -59,8 +61,10 @@ describe("boot seam (Story 1.2)", () => {
     for (let i = 0; i < 5; i++) {
       expect(() => loop()).not.toThrow();
     }
-    // First call logs, the remaining four are guarded no-ops.
-    expect(captured).toHaveLength(1);
-    expect(captured[0]).toBe(getConstant("LOG_BOOT"));
+    // Boot marker logged once; subsequent loops may emit phase logs (e.g. [board]).
+    expect(captured).toContain(getConstant("LOG_BOOT"));
+    expect(
+      captured.filter((line) => line === getConstant("LOG_BOOT")),
+    ).toHaveLength(1);
   });
 });
