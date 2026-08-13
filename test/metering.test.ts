@@ -38,6 +38,34 @@ describe("measurePhase", () => {
     );
   });
 
+  it("returns the callback result when metering enabled", async () => {
+    const config = await import("../src/config");
+    config.setConstant("CPU_METERING_ENABLED", true);
+
+    let cpuUsed = 0;
+    setGame({
+      cpu: { getUsed: () => (cpuUsed += 0.5) },
+      getRooms: () => ["sim"],
+      findMyStructures: () => [],
+      findConstructionSites: () => [],
+      findCreeps: () => [],
+      getController: () => undefined,
+      getTerrain: () => ({ get: () => 0 }),
+      getObjectById: () => undefined,
+    });
+
+    const { measurePhase } = await import("../src/control/metering");
+    expect(measurePhase("test", () => 42)).toBe(42);
+  });
+
+  it("returns the callback result when metering disabled", async () => {
+    const config = await import("../src/config");
+    config.setConstant("CPU_METERING_ENABLED", false);
+
+    const { measurePhase } = await import("../src/control/metering");
+    expect(measurePhase("test", () => 42)).toBe(42);
+  });
+
   it("does not log when metering disabled", async () => {
     const config = await import("../src/config");
     config.setConstant("CPU_METERING_ENABLED", false);

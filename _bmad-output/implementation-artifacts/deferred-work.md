@@ -23,3 +23,10 @@
 
 - `liveDistance` does not use `Game.getRangeTo` literally, despite AC2 wording — it delegates to the pure `chebyshevDistance`. Story T2 explicitly chose option (b) for the MVP seam, and the function is correct for same-room distances. Reconcile spec wording if future stories need actual `getRangeTo`. `[src/world/distance.ts:31]`
 - `liveDistance` does not guard against cross-room `RoomPositionData`. MVP is single-room, so this is acceptable; multi-room pathfinding is deferred to Phase 2 per architecture. `[src/world/distance.ts:31]`
+
+
+## Deferred from: code review of story 3.2 (2026-08-13)
+
+- `spawn` phase is not given the `TakenSet`, though Reserved-slot spawning (FR-16) needs capacity data to avoid double-filling [src/main.ts:167] — deferred to Epic 5, which owns spawn queueing; passing it now would add an unused parameter with no consumer.
+- Contracts naming a `jobId` that is absent from this Tick's Board are still counted toward capacity [src/control/taken.ts:102] — deferred to Story 3.3, which owns validators and clears invalid Contracts per FR-9.
+- `hasCapacity` is only tested against locally-built Jobs, never against Jobs produced by `world/producers/` from `JOB_POLICY_TABLE` [test/control/taken.test.ts] — deferred to Story 3.4, where Matching becomes the first production consumer.
