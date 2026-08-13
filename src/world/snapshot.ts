@@ -12,6 +12,7 @@ import {
   type RoomPositionData,
   type StructureStub,
 } from "../game";
+import { getContract } from "../state/contract";
 
 export interface SnapshotStructure {
   id: string;
@@ -139,6 +140,6 @@ function mapCreep(stub: CreepStub): SnapshotCreep {
     ttl: stub.ttl,
     carry: stub.carry,
     carryCapacity: stub.carryCapacity,
-    contract: stub.memory.contract,
+    contract: getContract(stub)?.jobId,
   };
 }

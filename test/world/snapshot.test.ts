@@ -137,6 +137,39 @@ describe("buildWorldSnapshot", () => {
       contract: "fill:site1",
     });
   });
+
+  it("drops invalid or missing creep contracts from the snapshot", () => {
+    setGame(
+      createMockGame({
+        creeps: [
+          {
+            id: "creep1" as Id<Creep>,
+            pos: { x: 1, y: 1, roomName: "sim" },
+            body: ["work", "carry", "move"],
+            ttl: 100,
+            carry: 25,
+            carryCapacity: 50,
+            memory: {},
+          },
+          {
+            id: "creep2" as Id<Creep>,
+            pos: { x: 2, y: 2, roomName: "sim" },
+            body: ["work", "carry", "move"],
+            ttl: 100,
+            carry: 25,
+            carryCapacity: 50,
+            memory: { contract: "bogus:123" },
+          },
+        ],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.creeps).toHaveLength(2);
+    expect(snapshot.creeps[0].contract).toBeUndefined();
+    expect(snapshot.creeps[1].contract).toBeUndefined();
+  });
 });
 
 describe("WorldSnapshot as plain data", () => {

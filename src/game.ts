@@ -134,7 +134,11 @@ const defaultGame: GameAdapter = {
       ttl: creep.ticksToLive ?? 0,
       carry: creep.carry.energy ?? 0,
       carryCapacity: creep.carryCapacity,
-      memory: { contract: creep.memory.contract },
+      memory: {
+        // Adapter mapping: the raw string is validated in world/snapshot.ts via getContract.
+        // game.ts stays below business logic and does not import state/.
+        contract: creep.memory.contract,
+      },
     }));
   },
   getController: (roomName: string): ControllerStub | undefined => {

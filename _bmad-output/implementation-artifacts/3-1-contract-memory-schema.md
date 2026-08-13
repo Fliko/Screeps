@@ -1,10 +1,16 @@
 ---
 baseline_commit: b82f427676d1c28d25a94a80c58ae8ea0c5f10c7
+baseline_revision: 5ac634ed96684f6a33a42352086f60f12af80fa2
+status: done
+followup_review_recommended: false
+final_revision: 5ac634ed96684f6a33a42352086f60f12af80fa2
 ---
 
 # Story 3.1: Contract & Memory Schema
 
-Status: ready-for-dev
+Status: done
+
+
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -46,53 +52,53 @@ and write through these accessors, never touching `creep.memory` directly.
    (except inside `state/` accessors and `game.ts` adapter mapping). [AC: AD-2 single owner]
 ## Tasks / Subtasks
 
-- [ ] **T1 — Define Contract state type in `src/state/contract.ts` (AC1)**
-  - [ ] Create `src/state/contract.ts`
-  - [ ] Define and export `ContractState` interface: `{ jobId: JobId }`
-  - [ ] Import `JobId` as type-only from `../board/job` (`import type { JobId } from "../board/job"`)
-  - [ ] Add file header comment: "AD-2: single owner of creep.memory.contract schema"
-  - [ ] Do **not** add extra fields (no `phase`, no `targetId` duplication, no TTL cache) — keep it minimal; more fields arrive in later stories if needed
+- [x] **T1 — Define Contract state type in `src/state/contract.ts` (AC1)**
+  - [x] Create `src/state/contract.ts`
+  - [x] Define and export `ContractState` interface: `{ jobId: JobId }`
+  - [x] Import `JobId` as type-only from `../board/job` (`import type { JobId } from "../board/job"`)
+  - [x] Add file header comment: "AD-2: single owner of creep.memory.contract schema"
+  - [x] Do **not** add extra fields (no `phase`, no `targetId` duplication, no TTL cache) — keep it minimal; more fields arrive in later stories if needed
 
-- [ ] **T2 — Implement read/write/clear accessors (AC2, AC3)**
-  - [ ] Export `getContract(creep: { memory: { contract?: string } }): ContractState | undefined`
-  - [ ] Implementation: read `creep.memory.contract`, call `parseJobId` from `board/job`, return `{ jobId }` if valid, else `undefined`
-  - [ ] Export `setContract(creep: { memory: { contract?: string } }, contract: ContractState): void`
-  - [ ] Implementation: write `creep.memory.contract = makeJobId(contract.jobId)`
-  - [ ] Export `clearContract(creep: { memory: { contract?: string } }): void`
-  - [ ] Implementation: `delete creep.memory.contract`
-  - [ ] Use minimal interface `{ memory: { contract?: string } }` so tests can pass plain objects, not full Creep stubs
+- [x] **T2 — Implement read/write/clear accessors (AC2, AC3)**
+  - [x] Export `getContract(creep: { memory: { contract?: string } }): ContractState | undefined`
+  - [x] Implementation: read `creep.memory.contract`, call `parseJobId` from `board/job`, return `{ jobId }` if valid, else `undefined`
+  - [x] Export `setContract(creep: { memory: { contract?: string } }, contract: ContractState): void`
+  - [x] Implementation: write `creep.memory.contract = makeJobId(contract.jobId)`
+  - [x] Export `clearContract(creep: { memory: { contract?: string } }): void`
+  - [x] Implementation: `delete creep.memory.contract`
+  - [x] Use minimal interface `{ memory: { contract?: string } }` so tests can pass plain objects, not full Creep stubs
 
-- [ ] **T3 — Deserialization guard for malformed persisted data (AC4)**
-  - [ ] Reuse `parseJobId` from `src/board/job.ts` (already validates JobType union and non-empty targetId from Story 2.2)
-  - [ ] If `parseJobId` throws or returns invalid, `getContract` returns `undefined`
-  - [ ] No exceptions escape `getContract` for bad persisted memory
-  - [ ] Test cases: valid `fill:ext1`, invalid `bogus:123`, missing field, empty string
+- [x] **T3 — Deserialization guard for malformed persisted data (AC4)**
+  - [x] Reuse `parseJobId` from `src/board/job.ts` (already validates JobType union and non-empty targetId from Story 2.2)
+  - [x] If `parseJobId` throws or returns invalid, `getContract` returns `undefined`
+  - [x] No exceptions escape `getContract` for bad persisted memory
+  - [x] Test cases: valid `fill:ext1`, invalid `bogus:123`, missing field, empty string
 
-- [ ] **T4 — Update `game.ts` adapter to use schema accessor (AC5)**
-  - [ ] Currently `mapCreep` in `src/game.ts` reads `stub.memory.contract` directly and copies it into `SnapshotCreep.contract?: string`
-  - [ ] Keep `SnapshotCreep.contract?: string` (snapshot is plain data), but add a comment noting the string should be validated via `getContract` by consumers
-  - [ ] Do **not** import `state/` into `game.ts` (adapter layer stays below business logic)
-  - [ ] The grep in AC5 excludes `game.ts` adapter mapping by convention
+- [x] **T4 — Update `game.ts` adapter to use schema accessor (AC5)**
+  - [x] Currently `mapCreep` in `src/game.ts` reads `stub.memory.contract` directly and copies it into `SnapshotCreep.contract?: string`
+  - [x] Keep `SnapshotCreep.contract?: string` (snapshot is plain data), but add a comment noting the string should be validated via `getContract` by consumers
+  - [x] Do **not** import `state/` into `game.ts` (adapter layer stays below business logic)
+  - [x] The grep in AC5 excludes `game.ts` adapter mapping by convention
 
-- [ ] **T5 — Unit tests in `test/state/contract.test.ts`**
-  - [ ] Test `getContract` returns `{ jobId }` for valid contract string
-  - [ ] Test `getContract` returns `undefined` for missing contract
-  - [ ] Test `getContract` returns `undefined` for malformed/invalid type/empty targetId
-  - [ ] Test `setContract` writes expected string to `memory.contract`
-  - [ ] Test `setContract` round-trips through `getContract`
-  - [ ] Test `clearContract` removes contract and `getContract` returns undefined
-  - [ ] All tests use plain `{ memory: { contract?: string } }` objects — no Screeps mocks
+- [x] **T5 — Unit tests in `test/state/contract.test.ts`**
+  - [x] Test `getContract` returns `{ jobId }` for valid contract string
+  - [x] Test `getContract` returns `undefined` for missing contract
+  - [x] Test `getContract` returns `undefined` for malformed/invalid type/empty targetId
+  - [x] Test `setContract` writes expected string to `memory.contract`
+  - [x] Test `setContract` round-trips through `getContract`
+  - [x] Test `clearContract` removes contract and `getContract` returns undefined
+  - [x] All tests use plain `{ memory: { contract?: string } }` objects — no Screeps mocks
 
-- [ ] **T6 — AD-2 ownership gate (AC5)**
-  - [ ] Run `rg "\.memory\.contract" src/ --type ts`
-  - [ ] Expected hits: `src/state/contract.ts` accessors, `src/game.ts` adapter mapping only
-  - [ ] If any other `src/` file touches `.memory.contract`, refactor to use `state/contract.ts`
+- [x] **T6 — AD-2 ownership gate (AC5)**
+  - [x] Run `rg "\.memory\.contract" src/ --type ts`
+  - [x] Expected hits: `src/state/contract.ts` accessors, `src/game.ts` adapter mapping only
+  - [x] If any other `src/` file touches `.memory.contract`, refactor to use `state/contract.ts`
 
-- [ ] **T7 — Regression gates**
-  - [ ] `npm run typecheck` — 0 errors
-  - [ ] `npm run lint` — 0 errors
-  - [ ] `npm test` — all existing tests pass + new contract tests pass
-  - [ ] `npm run build` — `dist/main.js` produced
+- [x] **T7 — Regression gates**
+  - [x] `npm run typecheck` — 0 errors
+  - [x] `npm run lint` — 0 errors
+  - [x] `npm test` — all existing tests pass + new contract tests pass
+  - [x] `npm run build` — `dist/main.js` produced
 
 ## Dev Notes
 
@@ -167,7 +173,61 @@ bm-dev (cheap model) — record here for audit.
 
 ### Completion Notes List
 
+- Created `src/state/contract.ts` as the single AD-2 owner of the `creep.memory.contract` schema.
+- `ContractState` is intentionally minimal: `{ jobId: JobId }`; no phase, targetId duplication, or TTL cache.
+- `getContract` parses the persisted string via `parseJobId` and returns `undefined` for any invalid/missing value (no throw).
+- `setContract` canonicalizes the stored string through `parseJobId`/`makeJobId`.
+- `clearContract` deletes `memory.contract`; subsequent `getContract` returns `undefined`.
+- `src/game.ts` received a comment only — no `state/` import in the adapter layer.
+- `src/world/snapshot.ts` was refactored to read the Creep's Contract through `getContract` so the only actual `.memory.contract` reads/assignments live in `state/contract.ts` and `game.ts`.
+- Remaining `rg "\.memory\.contract" src/ --type ts` hits are documentation comments in `src/board/contract.ts` and `src/board/job.ts`; there are no other reads or assignments.
+- All regression gates pass: `typecheck`, `lint`, `test` (66 tests), and `build` (`dist/main.js` 10.9kb).
+
 ### File List
+
+- `src/state/contract.ts` — created
+- `test/state/contract.test.ts` — created
+- `src/game.ts` — updated (adapter comment only)
+- `src/world/snapshot.ts` — updated (use `getContract` for snapshot contract field)
+- `_bmad-output/implementation-artifacts/3-1-contract-memory-schema.md` — updated task checkboxes and completion notes
+
+## Review Triage Log
+
+### 2026-08-12 — Review pass
+- intent_gap: 0
+- bad_spec: 0
+- patch: 6: (high 0, medium 0, low 6)
+- defer: 0
+- reject: 9
+- addressed_findings:
+  - `[low] [patch]` Strengthened `getContract` to explicitly reject non-string persisted values (`null`, numbers, etc.) instead of relying solely on `parseJobId` throwing.
+  - `[low] [patch]` Clarified ownership comment in `src/state/contract.ts` to note the permitted adapter read in `src/game.ts`.
+  - `[low] [patch]` Reworded `src/game.ts` adapter comment to reflect that `world/snapshot.ts` performs validation via `getContract`.
+  - `[low] [patch]` Added edge-case tests for `null`, non-string, uppercase type, and target ids containing colons.
+  - `[low] [patch]` Added explicit test documenting that `setContract` throws on a malformed `jobId`.
+  - `[low] [patch]` Added `test/world/snapshot.test.ts` coverage verifying that missing/invalid creep contracts are dropped from `SnapshotCreep.contract`.
+
+## Auto Run Result
+
+- **Status:** done
+- **Summary:** Implemented Story 3.1 — `state/contract.ts` is now the single AD-2 owner of the `creep.memory.contract` schema, providing typed `getContract`, `setContract`, and `clearContract` accessors. `world/snapshot.ts` reads contracts through the accessor, and `src/game.ts` remains a raw adapter mapping with an ownership comment.
+- **Files changed:**
+  - `src/state/contract.ts` — created: `ContractState`, `getContract`, `setContract`, `clearContract`.
+  - `test/state/contract.test.ts` — created: 13 accessor edge-case tests.
+  - `test/world/snapshot.test.ts` — updated: added invalid/missing contract mapping test.
+  - `src/game.ts` — updated: adapter ownership/validation comment.
+  - `src/world/snapshot.ts` — updated: `mapCreep` uses `getContract` to populate snapshot contract.
+- **Review findings breakdown:** 6 low-severity patches applied; 0 deferred; 9 rejected (design-by-spec, false positives, or unsubstantiated claims).
+- **Follow-up review recommended:** false
+- **Verification performed:**
+  - `npm run typecheck` — 0 errors
+  - `npm run lint` — 0 errors
+  - `npm test` — 71 tests passed
+  - `npm run build` — `dist/main.js` produced
+  - `rg "\.memory\.contract" src/ --type ts` — only `src/state/contract.ts` accessors and `src/game.ts` adapter mapping
+- **Residual risks:** None identified.
+- **Git note:** No commit was made per project git-governance rules (AI agents never run git-mutating commands). `final_revision` captured as current HEAD.
+
 
 ## Change Log
 
