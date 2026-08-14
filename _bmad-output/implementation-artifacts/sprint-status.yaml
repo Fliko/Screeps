@@ -71,12 +71,12 @@ development_status:
   3-3-validators: done
   3-4-matching-claim-lock: done
   3-5-movement-choke-point-stuck-escalation: done
-  3-6-cycle-wiring-wipe-recovery: backlog
+  3-6-cycle-wiring-wipe-recovery: deferred
   epic-3-retrospective: optional
 
   # Epic 4: The Generalist Economy — the Colony Sustains Itself
-  epic-4: backlog
-  4-1-behavior-frame-the-sourcing-rule: backlog
+  epic-4: in-progress
+  4-1-behavior-frame-the-sourcing-rule: done
   4-2-fill-behavior: backlog
   4-3-build-behavior: backlog
   4-4-upgrade-behavior: backlog
