@@ -63,3 +63,9 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-3-5-movement-choke-point-review-fixes.md`
   summary: `getMoveState` in `src/state/move.ts` validates `lastPos` is a finite number but not that it falls in the valid packed-position range (0-2499, per `y * 50 + x` with x,y ∈ [0,49]) or is an integer — a finite-but-out-of-range or fractional `lastPos` currently passes validation and would decode to a bogus or off-map position.
   evidence: Edge-case-hunter lens flagged this on the review of the `lastPos` NaN/Infinity fix. Deliberately out of this spec's narrowed scope — the spec's own Boundaries section anticipated range validation might follow ("out-of-range is a validation failure, not a value to coerce") but the Tasks section scoped only NaN/Infinity to keep the hardening pass small per the human's split decision.
+
+## Deferred from: bmad-build review of spec-3-5-movement-choke-point-deferred-cleanup (2026-08-13)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-5-movement-choke-point-deferred-cleanup.md`
+  summary: `getMoveState` in `src/state/move.ts` validates `lastPos` for finiteness, integer-ness, and range, but `stuck` is only validated for `typeof === "number" && Number.isFinite(...)` — a corrupted `stuck` (negative or fractional) still passes validation and is returned as a valid `MoveState`, unlike the now-hardened `lastPos`.
+  evidence: Blind-hunter lens flagged the asymmetry between the two fields' validation rigor on the review of the `lastPos` range/integer fix. Real gap (same self-healing rationale that motivated the `lastPos` hardening would apply here), but a new scope beyond this spec's four already-approved items — deferred rather than expanding scope mid-review.

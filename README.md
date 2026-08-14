@@ -22,7 +22,7 @@ Typecheck runs **TypeScript 7.0.2** in `strict` mode against `@types/screeps` 3.
 
 ### Movement note
 
-Movement choke point (Story 3.5, AC6): `reusePath` defaults to 5 ticks (verified against `@types/screeps` 3.4.0); the engine stores path in `creep.memory._move` and clears it when the path expires or a new `moveTo` with different opts is called. `ignoreCreeps: true` makes creep tiles walkable during pathfinding; it affects cost calculation by allowing movement through occupied squares, used to break deadlock in dense traffic (verified against API docs).
+Movement choke point (Story 3.5, AC6): `reusePath` defaults to 5 ticks (verified against `@types/screeps` 3.4.0); the engine stores path in `creep.memory._move` and clears it when the path expires or a new `moveTo` with different opts is called. `ignoreCreeps: true` makes creep tiles walkable during pathfinding; it affects cost calculation by allowing movement through occupied squares, used to break deadlock in dense traffic (verified against API docs). All creep movement must call `moveCreep` from `agents/movement.ts`; no direct `moveTo`/`move`/`moveByPath` calls elsewhere.
 
 ## Scripts
 

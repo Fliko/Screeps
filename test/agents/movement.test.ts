@@ -111,10 +111,10 @@ describe("moveCreep", () => {
     moveCreep(creep, target);
 
     const moveSpy = creep.moveTo as ReturnType<typeof vi.fn>;
-    expect(moveSpy).toHaveBeenCalledWith(
-      target,
-      expect.objectContaining({ ignoreCreeps: false }),
-    );
+    expect(moveSpy).toHaveBeenCalledWith(target, {
+      reusePath: 5,
+      ignoreCreeps: false,
+    });
   });
 
   it("escalates to repath opts when stuck reaches threshold (AC2)", () => {
@@ -130,10 +130,10 @@ describe("moveCreep", () => {
     moveCreep(creep, target);
 
     const moveSpy = creep.moveTo as ReturnType<typeof vi.fn>;
-    expect(moveSpy).toHaveBeenCalledWith(
-      target,
-      expect.objectContaining({ ignoreCreeps: true }),
-    );
+    expect(moveSpy).toHaveBeenCalledWith(target, {
+      reusePath: 5,
+      ignoreCreeps: true,
+    });
   });
 
   it("resets stuck to 0 after escalation (so next call uses default opts)", () => {
@@ -183,10 +183,10 @@ describe("moveCreep", () => {
 
     const moveSpy = creep.moveTo as ReturnType<typeof vi.fn>;
     // Should use repath opts, not the custom opts.
-    expect(moveSpy).toHaveBeenCalledWith(
-      target,
-      expect.objectContaining({ ignoreCreeps: true }),
-    );
+    expect(moveSpy).toHaveBeenCalledWith(target, {
+      reusePath: 5,
+      ignoreCreeps: true,
+    });
   });
 
   it("persists lastPos as the current packed position before returning", () => {

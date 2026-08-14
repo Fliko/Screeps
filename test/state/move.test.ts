@@ -31,6 +31,31 @@ describe("getMoveState", () => {
     };
     expect(getMoveState(creep)).toBeUndefined();
   });
+
+  it("returns the MoveState when lastPos is 2499 (max valid packed position)", () => {
+    const moveState: MoveState = { lastPos: 2499, stuck: 0 };
+    const creep = { memory: { move: moveState } };
+    expect(getMoveState(creep)).toEqual(moveState);
+  });
+
+  it("returns undefined when lastPos is 2500 (out of range)", () => {
+    const creep = {
+      memory: { move: { lastPos: 2500, stuck: 0 } as MoveState },
+    };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns undefined when lastPos is -1 (out of range)", () => {
+    const creep = { memory: { move: { lastPos: -1, stuck: 0 } as MoveState } };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns undefined when lastPos is non-integer", () => {
+    const creep = {
+      memory: { move: { lastPos: 12.5, stuck: 0 } as MoveState },
+    };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
 });
 
 describe("setMoveState", () => {

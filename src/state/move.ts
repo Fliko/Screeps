@@ -13,7 +13,9 @@
  * AD-8: tracks position and stuck counter for the movement choke point.
  * `lastPos` is packed as `y * 50 + x` to save memory; `stuck` counts consecutive
  * Ticks with unchanged position and zero fatigue, triggering escalation at the
- * configured threshold.
+ * configured threshold. `getMoveState` enforces at read time that `lastPos` is
+ * an integer in `[0, 2499]` (the valid packed-position range for a 50x50 room);
+ * an out-of-range or fractional value is rejected, not silently accepted.
  */
 export interface MoveState {
   lastPos: number;
@@ -25,10 +27,12 @@ export interface MoveState {
  *
  * Returns the typed MoveState if the persisted object exists and has the
  * expected shape (with valid numeric `stuck` and `lastPos`), otherwise
- * returns `undefined`. Validates that `stuck` and `lastPos` are finite
- * numbers to prevent NaN/Infinity from malformed memory silently disabling
- * stuck detection; a corrupted value self-heals by causing the caller to
- * re-initialize state on the next call.
+ * returns `undefined`. Validates that `stuck` is a finite number, and that
+ * `lastPos` is a finite number, an integer, and in `[0, 2499]` (the valid
+ * packed-position range for a 50x50 room) to prevent NaN/Infinity/
+ * out-of-range/fractional values from malformed memory silently disabling
+ * stuck detection or decoding to a bogus position; a corrupted value
+ * self-heals by causing the caller to re-initialize state on the next call.
  */
 export function getMoveState(creep: {
   memory: { move?: MoveState };
@@ -43,6 +47,14 @@ export function getMoveState(creep: {
   }
   // Validate lastPos is a number (not null/undefined/NaN/Infinity from malformed memory).
   if (typeof state.lastPos !== "number" || !Number.isFinite(state.lastPos)) {
+    return undefined;
+  }
+  // Validate lastPos is an integer in the valid packed-position range for a 50x50 room.
+  if (
+    !Number.isInteger(state.lastPos) ||
+    state.lastPos < 0 ||
+    state.lastPos > 2499
+  ) {
     return undefined;
   }
   return state;

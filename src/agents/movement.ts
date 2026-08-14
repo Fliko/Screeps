@@ -24,19 +24,6 @@ function packPos(pos: { x: number; y: number }): number {
 }
 
 /**
- * Unpacks a position from a packed number.
- *
- * Reverses `packPos`: extracts y = Math.floor(packed / 50), x = packed % 50.
- * Currently unused but kept for completeness and future use (AC2, T3).
- */
-function _unpackPos(packed: number): { x: number; y: number } {
-  return {
-    x: packed % 50,
-    y: Math.floor(packed / 50),
-  };
-}
-
-/**
  * Routes all creep movement through one helper with explicit options and stuck escalation.
  *
  * On each call:
