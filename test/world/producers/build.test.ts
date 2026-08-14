@@ -18,6 +18,7 @@ function site(id: string): SnapshotConstructionSite {
 function snapshot(sites: SnapshotConstructionSite[] = []): WorldSnapshot {
   return {
     roomName: "sim",
+    tick: 0,
     constructionSites: sites,
     structures: [],
     sources: [],

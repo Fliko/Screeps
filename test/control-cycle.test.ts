@@ -9,6 +9,12 @@ import type { MemoryStore } from "../src/memory";
 import { setMemory } from "../src/memory";
 import { getCurrentSnapshot } from "../src/world/snapshot";
 
+// STRUCTURE_SPAWN is an ambient `declare const` the real engine provides as
+// a runtime global — vitest/Node does not. control/spawn.ts (wired into the
+// AD-9 cycle exercised below via loop()) references it directly, so the test
+// stubs it onto globalThis, mirroring test/agents/behaviors/build.test.ts.
+Object.assign(globalThis, { STRUCTURE_SPAWN: "spawn" });
+
 function createMockGame(
   cpuGetUsed: () => number = () => 0,
   creeps: CreepStub[] = [],
@@ -22,6 +28,7 @@ function createMockGame(
     findCreeps: () => creeps,
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
+    getTime: () => 0,
     // Screeps resolves ids to live objects; the Creep stubs stand in for them so
     // world/creeps.ts can clear real memory in the wiring tests.
     getObjectById: ((id: string) =>
@@ -300,72 +307,89 @@ describe("Control Cycle - Match Wiring (Story 3.4)", () => {
   });
 
   it("gives exactly one of two idle Creeps a real memory.contract write for a maxWorkers:1 Job", async () => {
-    // fill Jobs (config.ts JOB_POLICY_TABLE) are pulled, maxWorkers 1 — the
-    // real generate/spawn Producer emits one fill Job when a spawn is
-    // under capacity and reachable, so two idle Creeps compete for it.
-    const spawn = {
-      id: "spawn1",
-      pos: { x: 5, y: 5, roomName: "sim" },
-      structureType: "spawn" as StructureConstant,
-      energy: 0,
-      energyCapacity: 300,
-    };
-    const c1 = {
-      id: "c1",
-      pos: { x: 0, y: 0, roomName: "sim" },
-      body: ["work", "carry", "move"] as BodyPartConstant[],
-      ttl: 1500,
-      carry: 0,
-      carryCapacity: 50,
-      spawning: false,
-      memory: {},
-    };
-    const c2 = {
-      id: "c2",
-      pos: { x: 1, y: 1, roomName: "sim" },
-      body: ["work", "carry", "move"] as BodyPartConstant[],
-      ttl: 1500,
-      carry: 0,
-      carryCapacity: 50,
-      spawning: false,
-      memory: {},
-    };
-    const creeps = [c1, c2];
-    setGame({
-      cpu: { getUsed: () => 0 },
-      getRooms: () => ["sim"],
-      findMyStructures: () => [spawn],
-      findConstructionSites: () => [],
-      findSources: () => [],
-      findCreeps: () => creeps,
-      getController: () => undefined,
-      getTerrain: () => ({ get: () => 0 }),
-      getObjectById: ((id: string) =>
-        creeps.find(
-          (creep) => creep.id === id,
-        )) as GameAdapter["getObjectById"],
+    // fill Jobs (config.ts JOB_POLICY_TABLE) are pulled — this test's premise
+    // (single winner) requires exactly one open slot, so it pins maxWorkers
+    // to 1 for its own duration regardless of the live tuning value, and
+    // restores it after (config numbers are an operator tuning knob, not
+    // fixed by this test).
+    const config = await import("../src/config");
+    const originalPolicy = config.getConstant("JOB_POLICY_TABLE");
+    config.setConstant("JOB_POLICY_TABLE", {
+      ...originalPolicy,
+      fill: { ...originalPolicy.fill, maxWorkers: 1 },
     });
 
-    const { loop } = await import("../src/main");
-    loop();
+    try {
+      // real generate/spawn Producer emits one fill Job when a spawn is
+      // under capacity and reachable, so two idle Creeps compete for it.
+      const spawn = {
+        id: "spawn1",
+        pos: { x: 5, y: 5, roomName: "sim" },
+        structureType: "spawn" as StructureConstant,
+        energy: 0,
+        energyCapacity: 300,
+      };
+      const c1 = {
+        id: "c1",
+        pos: { x: 0, y: 0, roomName: "sim" },
+        body: ["work", "carry", "move"] as BodyPartConstant[],
+        ttl: 1500,
+        carry: 0,
+        carryCapacity: 50,
+        spawning: false,
+        memory: {},
+      };
+      const c2 = {
+        id: "c2",
+        pos: { x: 1, y: 1, roomName: "sim" },
+        body: ["work", "carry", "move"] as BodyPartConstant[],
+        ttl: 1500,
+        carry: 0,
+        carryCapacity: 50,
+        spawning: false,
+        memory: {},
+      };
+      const creeps = [c1, c2];
+      setGame({
+        cpu: { getUsed: () => 0 },
+        getRooms: () => ["sim"],
+        findMyStructures: () => [spawn],
+        findConstructionSites: () => [],
+        findSources: () => [],
+        findCreeps: () => creeps,
+        getController: () => undefined,
+        getTerrain: () => ({ get: () => 0 }),
+        getTime: () => 0,
+        getObjectById: ((id: string) =>
+          creeps.find(
+            (creep) => creep.id === id,
+          )) as GameAdapter["getObjectById"],
+      });
 
-    const assigned = creeps.filter(
-      (creep) => (creep.memory as { contract?: string }).contract !== undefined,
-    );
-    expect(assigned).toHaveLength(1);
-    const winner = assigned[0];
-    if (!winner) {
-      throw new Error("expected exactly one assigned Creep");
+      const { loop } = await import("../src/main");
+      loop();
+
+      const assigned = creeps.filter(
+        (creep) =>
+          (creep.memory as { contract?: string }).contract !== undefined,
+      );
+      expect(assigned).toHaveLength(1);
+      const winner = assigned[0];
+      if (!winner) {
+        throw new Error("expected exactly one assigned Creep");
+      }
+      // match() processes idle Creeps in snapshot order, not by distance —
+      // distance only breaks ties between multiple Jobs for one Creep
+      // (covered directly in match.test.ts). With a single maxWorkers:1 Job
+      // and two competing Creeps, the claim lock is first-come: c1 is first
+      // in snapshot order, so c1 deterministically wins regardless of c1/c2
+      // being farther from the Job than c2.
+      expect(winner.id).toBe("c1");
+      expect((winner.memory as { contract?: string }).contract).toBe(
+        "fill:spawn1",
+      );
+    } finally {
+      config.setConstant("JOB_POLICY_TABLE", originalPolicy);
     }
-    // match() processes idle Creeps in snapshot order, not by distance —
-    // distance only breaks ties between multiple Jobs for one Creep
-    // (covered directly in match.test.ts). With a single maxWorkers:1 Job
-    // and two competing Creeps, the claim lock is first-come: c1 is first
-    // in snapshot order, so c1 deterministically wins regardless of c1/c2
-    // being farther from the Job than c2.
-    expect(winner.id).toBe("c1");
-    expect((winner.memory as { contract?: string }).contract).toBe(
-      "fill:spawn1",
-    );
   });
 });

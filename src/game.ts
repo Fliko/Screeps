@@ -27,6 +27,8 @@ export interface StructureStub {
   structureType: StructureConstant;
   energy: number;
   energyCapacity: number;
+  /** True while a STRUCTURE_SPAWN is mid-spawnCreep. Only meaningful for STRUCTURE_SPAWN. */
+  spawning?: boolean;
 }
 
 export interface ConstructionSiteStub {
@@ -89,6 +91,8 @@ export interface GameAdapter {
   getTerrain(roomName: string): TerrainStub;
   /** Resolve any object by its Screeps id. */
   getObjectById<T extends _HasId>(id: Id<T> | string): T | undefined;
+  /** Return the current Tick number (wraps Game.time). */
+  getTime(): number;
 }
 
 function toPos(pos: RoomPosition): RoomPositionData {
@@ -125,6 +129,9 @@ const defaultGame: GameAdapter = {
         structureType: structure.structureType,
         energy: structure.energy,
         energyCapacity: structure.energyCapacity,
+        ...(structure.structureType === STRUCTURE_SPAWN
+          ? { spawning: (structure as StructureSpawn).spawning != null }
+          : {}),
       }));
   },
   findConstructionSites: (roomName: string): ConstructionSiteStub[] => {
@@ -182,6 +189,7 @@ const defaultGame: GameAdapter = {
     Game.map.getRoomTerrain(roomName),
   getObjectById: <T extends _HasId>(id: Id<T> | string): T | undefined =>
     Game.getObjectById(id as Id<T>) ?? undefined,
+  getTime: () => Game.time,
 };
 
 /**

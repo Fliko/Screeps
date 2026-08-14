@@ -27,6 +27,7 @@ describe("measurePhase", () => {
       findCreeps: () => [],
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
+      getTime: () => 0,
       getObjectById: () => undefined,
     };
     setGame(mockGame);
@@ -53,6 +54,7 @@ describe("measurePhase", () => {
       findCreeps: () => [],
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
+      getTime: () => 0,
       getObjectById: () => undefined,
     });
 
@@ -81,6 +83,7 @@ describe("measurePhase", () => {
       findCreeps: () => [],
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
+      getTime: () => 0,
       getObjectById: () => undefined,
     };
     setGame(mockGame);

@@ -22,6 +22,7 @@ function createMockGame(overrides?: {
     findSources: () => overrides?.sources ?? [],
     findCreeps: () => overrides?.creeps ?? [],
     getTerrain: () => ({ get: () => 0 }),
+    getTime: () => 0,
     getObjectById: () => undefined,
   };
 }
@@ -228,6 +229,7 @@ describe("WorldSnapshot as plain data", () => {
   it("accepts a literal plain-data snapshot with no Game mocks", () => {
     const snapshot: WorldSnapshot = {
       roomName: "sim",
+      tick: 0,
       controller: {
         id: "controller1",
         pos: { x: 10, y: 20, roomName: "sim" },

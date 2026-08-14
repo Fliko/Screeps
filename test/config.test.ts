@@ -8,11 +8,14 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
     LOG_BOOT: getConstant("LOG_BOOT"),
     CPU_METERING_ENABLED: getConstant("CPU_METERING_ENABLED"),
     LOG_PHASE_PREFIX: getConstant("LOG_PHASE_PREFIX"),
+    LOG_BOARD_ENABLED: getConstant("LOG_BOARD_ENABLED"),
     JOB_POLICY_TABLE: getConstant("JOB_POLICY_TABLE"),
     MOVEMENT_STUCK_THRESHOLD: 3,
     MOVEMENT_DEFAULT_OPTS: { reusePath: 5, ignoreCreeps: false },
     MOVEMENT_REPATH_OPTS: { reusePath: 5, ignoreCreeps: true },
     CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
+    SPAWN_TARGET_POPULATION: getConstant("SPAWN_TARGET_POPULATION"),
+    SPAWN_BODY_GENERALIST: getConstant("SPAWN_BODY_GENERALIST"),
     ...overrides,
   };
 }
@@ -28,11 +31,14 @@ describe("validateMovementConfig", () => {
         LOG_BOOT: getConstant("LOG_BOOT"),
         CPU_METERING_ENABLED: getConstant("CPU_METERING_ENABLED"),
         LOG_PHASE_PREFIX: getConstant("LOG_PHASE_PREFIX"),
+        LOG_BOARD_ENABLED: getConstant("LOG_BOARD_ENABLED"),
         JOB_POLICY_TABLE: getConstant("JOB_POLICY_TABLE"),
         MOVEMENT_STUCK_THRESHOLD: getConstant("MOVEMENT_STUCK_THRESHOLD"),
         MOVEMENT_DEFAULT_OPTS: getConstant("MOVEMENT_DEFAULT_OPTS"),
         MOVEMENT_REPATH_OPTS: getConstant("MOVEMENT_REPATH_OPTS"),
         CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
+        SPAWN_TARGET_POPULATION: getConstant("SPAWN_TARGET_POPULATION"),
+        SPAWN_BODY_GENERALIST: getConstant("SPAWN_BODY_GENERALIST"),
       }),
     ).not.toThrow();
   });

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { getConstant } from "../../../src/config";
 import { produceFill } from "../../../src/world/producers/fill";
 import type {
   SnapshotStructure,
@@ -23,6 +24,7 @@ function structure(
 function snapshot(structures: SnapshotStructure[] = []): WorldSnapshot {
   return {
     roomName: "sim",
+    tick: 0,
     structures,
     constructionSites: [],
     sources: [],
@@ -43,7 +45,9 @@ describe("produceFill", () => {
     expect(jobs[0].id).toBe("fill:ext1");
     expect(jobs[0].type).toBe("fill");
     expect(jobs[0].tier).toBe("critical");
-    expect(jobs[0].maxWorkers).toBe(1);
+    expect(jobs[0].maxWorkers).toBe(
+      getConstant("JOB_POLICY_TABLE").fill.maxWorkers,
+    );
     expect(jobs[0].assignmentMode).toBe("pulled");
     expect(jobs[0].lifetimeClass).toBe("transient");
   });

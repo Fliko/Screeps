@@ -40,6 +40,7 @@ describe("boot seam (Story 1.2)", () => {
       findCreeps: () => [],
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
+      getTime: () => 0,
       getObjectById: () => undefined,
     };
 

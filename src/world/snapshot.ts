@@ -21,6 +21,8 @@ export interface SnapshotStructure {
   structureType: StructureConstant;
   energy: number;
   energyCapacity: number;
+  /** True while a STRUCTURE_SPAWN is mid-spawnCreep. Only meaningful for STRUCTURE_SPAWN. */
+  spawning?: boolean;
 }
 
 export interface SnapshotSource {
@@ -61,6 +63,8 @@ export interface SnapshotCreep {
 
 export interface WorldSnapshot {
   roomName: string;
+  /** Current Tick number, from `game.getTime()` (Story 5.1) — used for unique Creep naming. */
+  tick: number;
   controller?: SnapshotController;
   structures: readonly SnapshotStructure[];
   constructionSites: readonly SnapshotConstructionSite[];
@@ -83,6 +87,7 @@ export function buildWorldSnapshot(): WorldSnapshot {
 
   const snapshot: WorldSnapshot = {
     roomName,
+    tick: game.getTime(),
     structures: [],
     constructionSites: [],
     sources: [],
@@ -119,6 +124,7 @@ function mapStructure(stub: StructureStub): SnapshotStructure {
     structureType: stub.structureType,
     energy: stub.energy,
     energyCapacity: stub.energyCapacity,
+    spawning: stub.spawning,
   };
 }
 

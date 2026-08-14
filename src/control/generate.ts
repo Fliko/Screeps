@@ -1,6 +1,7 @@
 /** AD-9: generate phase — reset the Board, build the per-Tick world snapshot, then run Producers */
 import type { Board } from "../board/registry";
 import { getBoard, resetBoard } from "../board/registry";
+import { getConstant } from "../config";
 import { runProducers } from "../world/producers/run";
 import { buildWorldSnapshot } from "../world/snapshot";
 
@@ -17,5 +18,7 @@ export function generate(): void {
   resetBoard();
   buildWorldSnapshot();
   runProducers();
-  console.log(formatBoardLog(getBoard()));
+  if (getConstant("LOG_BOARD_ENABLED")) {
+    console.log(formatBoardLog(getBoard()));
+  }
 }

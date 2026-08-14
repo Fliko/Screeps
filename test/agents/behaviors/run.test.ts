@@ -57,6 +57,7 @@ function createMockGame(creeps: CreepStub[]): GameAdapter {
     findCreeps: () => creeps,
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
+    getTime: () => 0,
     getObjectById: ((id: string) =>
       creeps.find((creep) => creep.id === id)) as GameAdapter["getObjectById"],
   };

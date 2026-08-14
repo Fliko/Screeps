@@ -40,6 +40,8 @@ export interface Config {
   CPU_METERING_ENABLED: boolean;
   /** Log prefix for control-cycle phase metering (Story 1.4, AC1). */
   LOG_PHASE_PREFIX: string;
+  /** Board-summary log toggle — when true, `generate` logs the per-Tick Job Board (mirrors CPU_METERING_ENABLED). */
+  LOG_BOARD_ENABLED: boolean;
   /** Per-Job-type policy table — the single tuning home for the Board (Story 2.3). */
   JOB_POLICY_TABLE: JobPolicyTable;
   /** Stuck detection threshold — number of consecutive Ticks position must be unchanged (with fatigue === 0) to trigger re-path escalation (Story 3.5, AC2, AC5). */
@@ -50,17 +52,22 @@ export interface Config {
   MOVEMENT_REPATH_OPTS: MoveToOpts;
   /** DYING-check threshold — a Creep whose ttl drops below this runs the DYING unload behavior instead of its Job (Story 4.5). */
   CREEP_DYING_TTL_THRESHOLD: number;
+  /** Population-maintenance target — control/spawn tops up to this Creep count (Story 5.1). Pinned to 4; see spec Design Notes. */
+  SPAWN_TARGET_POPULATION: number;
+  /** Body composition control/spawn requests for population top-up (Story 5.1) — reuses the Generalist Body all three Jobs require. */
+  SPAWN_BODY_GENERALIST: BodyPartConstant[];
 }
 
 const constants: Config = {
   LOG_BOOT: "screeps_ai booted",
   CPU_METERING_ENABLED: false,
   LOG_PHASE_PREFIX: "[control]",
+  LOG_BOARD_ENABLED: false,
   JOB_POLICY_TABLE: {
     fill: {
       tier: "critical",
       withinTierPriority: 0,
-      maxWorkers: 1,
+      maxWorkers: 6,
       assignmentMode: "pulled",
       lifetimeClass: "transient",
       requirements: { body: GENERALIST_BODY, ttlFloor: 200 },
@@ -78,7 +85,7 @@ const constants: Config = {
       withinTierPriority: 0,
       maxWorkers: Infinity,
       assignmentMode: "pulled",
-      lifetimeClass: "persistent",
+      lifetimeClass: "transient",
       requirements: { body: GENERALIST_BODY, ttlFloor: 0 },
     },
   },
@@ -92,6 +99,8 @@ const constants: Config = {
     ignoreCreeps: true,
   },
   CREEP_DYING_TTL_THRESHOLD: 50,
+  SPAWN_TARGET_POPULATION: 10,
+  SPAWN_BODY_GENERALIST: GENERALIST_BODY,
 };
 
 /**
