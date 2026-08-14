@@ -3,11 +3,17 @@ import type { CreepStub, GameAdapter } from "../../../src/game";
 import { setGame } from "../../../src/game";
 import { buildWorldSnapshot } from "../../../src/world/snapshot";
 
-// Hoisted mock: run.ts imports runFill from this module, so mocking it here
-// (before run.ts is imported below) intercepts the dispatch table entry.
+// Hoisted mocks: run.ts imports runFill/runBuild from these modules, so
+// mocking them here (before run.ts is imported below) intercepts the
+// dispatch table entries.
 const runFillMock = vi.fn();
 vi.mock("../../../src/agents/behaviors/fill", () => ({
   runFill: (creepId: string, jobId: string) => runFillMock(creepId, jobId),
+}));
+
+const runBuildMock = vi.fn();
+vi.mock("../../../src/agents/behaviors/build", () => ({
+  runBuild: (creepId: string, jobId: string) => runBuildMock(creepId, jobId),
 }));
 
 const { runBehaviors } = await import("../../../src/agents/behaviors/run");
@@ -42,6 +48,7 @@ function createMockGame(creeps: CreepStub[]): GameAdapter {
 
 afterEach(() => {
   runFillMock.mockClear();
+  runBuildMock.mockClear();
   setGame();
 });
 
@@ -66,13 +73,14 @@ describe("runBehaviors — dispatch", () => {
     expect(runFillMock).not.toHaveBeenCalled();
   });
 
-  it("is a no-op for a Contract whose Job type has no dispatch entry (build)", () => {
+  it("calls runBuild for a Creep holding a build Contract", () => {
     const creep = createCreep("c1", "build:site1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
-    expect(() => runBehaviors()).not.toThrow();
-    expect(runFillMock).not.toHaveBeenCalled();
+    runBehaviors();
+
+    expect(runBuildMock).toHaveBeenCalledWith("c1", "build:site1");
   });
 
   it("is a no-op for a Contract whose Job type has no dispatch entry (upgrade)", () => {

@@ -3,18 +3,20 @@
  * calls behaviors. Reads this Tick's snapshot via getCurrentSnapshot() (AD-10
  * seam; no Game reads here), and for each Contracted Creep dispatches to the
  * behavior registered for its Contract's Job type. A Job type with no table
- * entry is a silent no-op this Tick (Stories 4.3/4.4 add `build`/`upgrade`
- * with zero changes to this table's shape).
+ * entry is a silent no-op this Tick (Story 4.4 adds `upgrade` with zero
+ * changes to this table's shape).
  */
 import type { JobType } from "../../board/job";
 import { parseJobId } from "../../board/job";
 import { getCurrentSnapshot } from "../../world/snapshot";
+import { runBuild } from "./build";
 import { runFill } from "./fill";
 
 type Behavior = (creepId: string, jobId: string) => void;
 
 const BEHAVIORS: Partial<Record<JobType, Behavior>> = {
   fill: runFill,
+  build: runBuild,
 };
 
 export function runBehaviors(): void {
