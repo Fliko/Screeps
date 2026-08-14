@@ -8,8 +8,9 @@
  * The engine resolves `.memory` correctly from the live object regardless of the
  * Memory key. All Memory mutation is delegated to `state/contract.ts` (AD-2).
  */
+import type { JobId } from "../board/job";
 import { getGame } from "../game";
-import { clearContract } from "../state/contract";
+import { clearContract, setContract } from "../state/contract";
 
 /**
  * Clears the Contract on the live Creep with `creepId`.
@@ -29,5 +30,24 @@ export function clearCreepContract(creepId: string): boolean {
     return false;
   }
   clearContract(creep);
+  return true;
+}
+
+/**
+ * Assigns a Contract for `jobId` to the live Creep with `creepId`.
+ *
+ * Symmetric to `clearCreepContract`: the boolean reports reachability, not
+ * mutation intent — `true` means the id resolved to a live, memory-bearing
+ * object whose Contract is now `jobId`; `false` means the id resolved to
+ * nothing or to an object without `memory`. Callers (Story 3.4's `match`)
+ * use this so a Contract is only reported as assigned when the Creep was
+ * actually reachable.
+ */
+export function assignCreepContract(creepId: string, jobId: JobId): boolean {
+  const creep = getGame().getObjectById<Creep>(creepId);
+  if (!creep || !("memory" in creep) || !creep.memory) {
+    return false;
+  }
+  setContract(creep, { jobId });
   return true;
 }

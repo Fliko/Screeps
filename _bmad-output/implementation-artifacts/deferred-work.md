@@ -39,3 +39,9 @@
 - `createMockGame`/`createCreep` test fixtures are duplicated across `test/control-cycle.test.ts`, `test/world/creeps.test.ts`, and `test/control/validate.test.ts`, each with slightly divergent shapes — deferred cleanup; a shared `test/helpers/game.ts` factory would prevent drift the next time `GameAdapter` gains a method.
 - `releaseContracts`' partial-decrement branch (two Creeps on one Job, one cleared, count 2→1) is unit-tested (Story 3.2) but not exercised at the `loop()` integration level — deferred; the underlying logic is covered, this is additional confidence only.
 - Malformed `creep.memory.contract` strings are never cleaned up — `getContract` (Story 3.1) already treats them as "no contract" so `validate` never sees them, but the raw junk string persists in Memory indefinitely — deferred; a Memory garbage-collection pass would need to scan `Memory.creeps` directly, out of scope for any current story.
+
+
+## Deferred from: code review of story 3.4 (2026-08-13)
+
+- `selectJob` in `src/control/match.ts` never checks `job.requirements.body` against `creep.body` — a Creep with the wrong Body parts (e.g. no `work`) can still be matched to and keep a `fill`/`build`/`upgrade` Job. Same gap already deferred from Story 3.3's validators (`requirements.body` never checked there either); MVP has only one Body composition (Generalist) so it's currently unreachable — deferred until Epic 6 introduces Specialist Bodies with different part sets.
+- `job.maxWorkers` is never validated to be a positive number before `selectJob` compares a running count against it — a `0` or negative `maxWorkers` slipping through a future Producer/config bug would silently make that Job unselectable with no diagnostic. Deferred; `config.ts`'s `JOB_POLICY_TABLE` is hand-authored and currently the only source of `maxWorkers`, so this is not reachable today — belongs with Producer/policy-table validation if one is ever added, not with Matching.
