@@ -12,6 +12,7 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
     MOVEMENT_STUCK_THRESHOLD: 3,
     MOVEMENT_DEFAULT_OPTS: { reusePath: 5, ignoreCreeps: false },
     MOVEMENT_REPATH_OPTS: { reusePath: 5, ignoreCreeps: true },
+    CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
     ...overrides,
   };
 }
@@ -31,6 +32,7 @@ describe("validateMovementConfig", () => {
         MOVEMENT_STUCK_THRESHOLD: getConstant("MOVEMENT_STUCK_THRESHOLD"),
         MOVEMENT_DEFAULT_OPTS: getConstant("MOVEMENT_DEFAULT_OPTS"),
         MOVEMENT_REPATH_OPTS: getConstant("MOVEMENT_REPATH_OPTS"),
+        CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
       }),
     ).not.toThrow();
   });

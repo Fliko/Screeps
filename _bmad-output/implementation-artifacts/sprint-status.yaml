@@ -80,7 +80,7 @@ development_status:
   4-2-fill-behavior: done
   4-3-build-behavior: done
   4-4-upgrade-behavior: done
-  4-5-dying-unload-economy-observation: backlog
+  4-5-dying-unload-economy-observation: done
   epic-4-retrospective: optional
 
   # Epic 5: Spawn Management — the Colony Replaces Itself

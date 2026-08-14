@@ -48,6 +48,8 @@ export interface Config {
   MOVEMENT_DEFAULT_OPTS: MoveToOpts;
   /** Re-path moveTo options for escalation — includes ignoreCreeps: true to break stuck (Story 3.5, AC2, AC5). */
   MOVEMENT_REPATH_OPTS: MoveToOpts;
+  /** DYING-check threshold — a Creep whose ttl drops below this runs the DYING unload behavior instead of its Job (Story 4.5). */
+  CREEP_DYING_TTL_THRESHOLD: number;
 }
 
 const constants: Config = {
@@ -89,6 +91,7 @@ const constants: Config = {
     reusePath: 5,
     ignoreCreeps: true,
   },
+  CREEP_DYING_TTL_THRESHOLD: 50,
 };
 
 /**

@@ -22,17 +22,27 @@ vi.mock("../../../src/agents/behaviors/upgrade", () => ({
     runUpgradeMock(creepId, jobId),
 }));
 
+const runDyingUnloadMock = vi.fn();
+vi.mock("../../../src/agents/behaviors/dying", () => ({
+  runDyingUnload: (creepId: string) => runDyingUnloadMock(creepId),
+}));
+
 const { runBehaviors } = await import("../../../src/agents/behaviors/run");
 
-function createCreep(id: string, contract?: string): CreepStub {
+function createCreep(
+  id: string,
+  contract?: string,
+  options: { ttl?: number; spawning?: boolean } = {},
+): CreepStub {
+  const { ttl = 1500, spawning = false } = options;
   return {
     id,
     pos: { x: 0, y: 0, roomName: "sim" },
     body: ["work", "carry", "move"],
-    ttl: 1500,
+    ttl,
     carry: 0,
     carryCapacity: 50,
-    spawning: false,
+    spawning,
     memory: contract === undefined ? {} : { contract },
   };
 }
@@ -56,6 +66,7 @@ afterEach(() => {
   runFillMock.mockClear();
   runBuildMock.mockClear();
   runUpgradeMock.mockClear();
+  runDyingUnloadMock.mockClear();
   setGame();
 });
 
@@ -130,5 +141,75 @@ describe("runBehaviors — dispatch", () => {
     expect(runFillMock).toHaveBeenCalledTimes(2);
     expect(runFillMock).toHaveBeenNthCalledWith(1, "c1", "fill:spawn1");
     expect(runFillMock).toHaveBeenNthCalledWith(2, "c2", "fill:ext1");
+  });
+});
+
+describe("runBehaviors — DYING interceptor (Story 4.5)", () => {
+  it("dispatches a Creep below the ttl threshold to runDyingUnload, not its Job behavior", () => {
+    const creep = createCreep("c1", "fill:spawn1", { ttl: 49 });
+    setGame(createMockGame([creep]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runDyingUnloadMock).toHaveBeenCalledWith("c1");
+    expect(runFillMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches a Creep below the ttl threshold with no Contract to runDyingUnload", () => {
+    const creep = createCreep("c1", undefined, { ttl: 10 });
+    setGame(createMockGame([creep]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runDyingUnloadMock).toHaveBeenCalledWith("c1");
+    expect(runFillMock).not.toHaveBeenCalled();
+    expect(runBuildMock).not.toHaveBeenCalled();
+    expect(runUpgradeMock).not.toHaveBeenCalled();
+  });
+
+  it("does not treat a Creep at or above the ttl threshold as dying", () => {
+    const creep = createCreep("c1", "fill:spawn1", { ttl: 50 });
+    setGame(createMockGame([creep]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runDyingUnloadMock).not.toHaveBeenCalled();
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+  });
+
+  it("does not treat a spawning Creep (ttl reads 0) as dying", () => {
+    const creep = createCreep("c1", "fill:spawn1", {
+      ttl: 0,
+      spawning: true,
+    });
+    setGame(createMockGame([creep]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runDyingUnloadMock).not.toHaveBeenCalled();
+    expect(runFillMock).not.toHaveBeenCalled();
+  });
+
+  it("logs and continues dispatch when runDyingUnload throws for one Creep", () => {
+    runDyingUnloadMock.mockImplementationOnce(() => {
+      throw new Error("boom");
+    });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const dying = createCreep("c1", "fill:spawn1", { ttl: 10 });
+    const other = createCreep("c2", "fill:ext1");
+    setGame(createMockGame([dying, other]));
+    buildWorldSnapshot();
+
+    expect(() => runBehaviors()).not.toThrow();
+
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining("runDyingUnload threw for Creep c1"),
+    );
+    expect(runFillMock).toHaveBeenCalledWith("c2", "fill:ext1");
+    logSpy.mockRestore();
   });
 });
