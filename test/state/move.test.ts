@@ -56,6 +56,44 @@ describe("getMoveState", () => {
     };
     expect(getMoveState(creep)).toBeUndefined();
   });
+
+  it("returns undefined when stuck is NaN", () => {
+    const creep = { memory: { move: { lastPos: 0, stuck: NaN } as MoveState } };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns undefined when stuck is Infinity", () => {
+    const creep = {
+      memory: { move: { lastPos: 0, stuck: Infinity } as MoveState },
+    };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns undefined when stuck is negative", () => {
+    const creep = {
+      memory: { move: { lastPos: 0, stuck: -1 } as MoveState },
+    };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns undefined when stuck is non-integer", () => {
+    const creep = {
+      memory: { move: { lastPos: 0, stuck: 2.5 } as MoveState },
+    };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns the MoveState when stuck is 0", () => {
+    const moveState: MoveState = { lastPos: 0, stuck: 0 };
+    const creep = { memory: { move: moveState } };
+    expect(getMoveState(creep)).toEqual(moveState);
+  });
+
+  it("returns the MoveState when stuck is a large valid integer", () => {
+    const moveState: MoveState = { lastPos: 0, stuck: 100 };
+    const creep = { memory: { move: moveState } };
+    expect(getMoveState(creep)).toEqual(moveState);
+  });
 });
 
 describe("setMoveState", () => {
