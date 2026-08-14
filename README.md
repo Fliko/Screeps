@@ -20,6 +20,10 @@ All versions pinned exactly (no `^`/`~`) per Architecture Spine §Stack, verifie
 
 Typecheck runs **TypeScript 7.0.2** in `strict` mode against `@types/screeps` 3.4.0. The fallback is `typescript ~5.9.3` if TS7 ever rejects the typings (Story 1.1 — AC2). As of this commit the primary path is live: `npm run typecheck` passes on **TS 7.0.2** with no fallback.
 
+### Movement note
+
+Movement choke point (Story 3.5, AC6): `reusePath` defaults to 5 ticks (verified against `@types/screeps` 3.4.0); the engine stores path in `creep.memory._move` and clears it when the path expires or a new `moveTo` with different opts is called. `ignoreCreeps: true` makes creep tiles walkable during pathfinding; it affects cost calculation by allowing movement through occupied squares, used to break deadlock in dense traffic (verified against API docs).
+
 ## Scripts
 
 - `npm run typecheck` — `tsc --noEmit`

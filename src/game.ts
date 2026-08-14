@@ -6,9 +6,12 @@
  * No Game API reads outside world/ and this adapter.
  */
 
+import type { MoveState } from "./state/move";
+
 declare global {
   interface CreepMemory {
     contract?: string;
+    move?: MoveState;
   }
 }
 

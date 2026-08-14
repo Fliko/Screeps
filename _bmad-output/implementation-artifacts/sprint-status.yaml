@@ -70,7 +70,7 @@ development_status:
   3-2-taken-set-derivation: done
   3-3-validators: done
   3-4-matching-claim-lock: done
-  3-5-movement-choke-point-stuck-escalation: backlog
+  3-5-movement-choke-point-stuck-escalation: review
   3-6-cycle-wiring-wipe-recovery: backlog
   epic-3-retrospective: optional
 

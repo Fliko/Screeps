@@ -42,6 +42,12 @@ export interface Config {
   LOG_PHASE_PREFIX: string;
   /** Per-Job-type policy table — the single tuning home for the Board (Story 2.3). */
   JOB_POLICY_TABLE: JobPolicyTable;
+  /** Stuck detection threshold — number of consecutive Ticks position must be unchanged (with fatigue === 0) to trigger re-path escalation (Story 3.5, AC2, AC5). */
+  MOVEMENT_STUCK_THRESHOLD: number;
+  /** Default moveTo options for normal movement — explicit reusePath, no ignoreCreeps (Story 3.5, AC5). */
+  MOVEMENT_DEFAULT_OPTS: MoveToOpts;
+  /** Re-path moveTo options for escalation — includes ignoreCreeps: true to break stuck (Story 3.5, AC2, AC5). */
+  MOVEMENT_REPATH_OPTS: MoveToOpts;
 }
 
 const constants: Config = {
@@ -73,6 +79,15 @@ const constants: Config = {
       lifetimeClass: "persistent",
       requirements: { body: GENERALIST_BODY, ttlFloor: 0 },
     },
+  },
+  MOVEMENT_STUCK_THRESHOLD: 3,
+  MOVEMENT_DEFAULT_OPTS: {
+    reusePath: 5,
+    ignoreCreeps: false,
+  },
+  MOVEMENT_REPATH_OPTS: {
+    reusePath: 5,
+    ignoreCreeps: true,
   },
 };
 
