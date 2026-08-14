@@ -56,6 +56,8 @@ export interface Config {
   SPAWN_TARGET_POPULATION: number;
   /** Body composition control/spawn requests for population top-up (Story 5.1) — reuses the Generalist Body all three Jobs require. */
   SPAWN_BODY_GENERALIST: BodyPartConstant[];
+  /** Near-dying replacement threshold — a living, non-Spawning Creep with ttl below this triggers a proactive replacement spawn (Story 5.2). Matches the fill/build Job policy ttlFloor of 200. */
+  SPAWN_TTL_REPLACEMENT_THRESHOLD: number;
 }
 
 const constants: Config = {
@@ -101,6 +103,7 @@ const constants: Config = {
   CREEP_DYING_TTL_THRESHOLD: 50,
   SPAWN_TARGET_POPULATION: 10,
   SPAWN_BODY_GENERALIST: GENERALIST_BODY,
+  SPAWN_TTL_REPLACEMENT_THRESHOLD: 200,
 };
 
 /**

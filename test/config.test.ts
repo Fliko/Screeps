@@ -16,6 +16,9 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
     CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
     SPAWN_TARGET_POPULATION: getConstant("SPAWN_TARGET_POPULATION"),
     SPAWN_BODY_GENERALIST: getConstant("SPAWN_BODY_GENERALIST"),
+    SPAWN_TTL_REPLACEMENT_THRESHOLD: getConstant(
+      "SPAWN_TTL_REPLACEMENT_THRESHOLD",
+    ),
     ...overrides,
   };
 }
@@ -39,6 +42,9 @@ describe("validateMovementConfig", () => {
         CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
         SPAWN_TARGET_POPULATION: getConstant("SPAWN_TARGET_POPULATION"),
         SPAWN_BODY_GENERALIST: getConstant("SPAWN_BODY_GENERALIST"),
+        SPAWN_TTL_REPLACEMENT_THRESHOLD: getConstant(
+          "SPAWN_TTL_REPLACEMENT_THRESHOLD",
+        ),
       }),
     ).not.toThrow();
   });

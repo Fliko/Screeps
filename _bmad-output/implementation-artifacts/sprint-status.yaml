@@ -86,7 +86,7 @@ development_status:
   # Epic 5: Spawn Management — the Colony Replaces Itself
   epic-5: in-progress
   5-1-population-maintenance-the-spawncreep-issuer: done
-  5-2-proactive-ttl-replacement: backlog
+  5-2-proactive-ttl-replacement: done
   5-3-body-selection-affordability: backlog
   5-4-spawn-priority-ordering-colony-observation: backlog
   epic-5-retrospective: optional

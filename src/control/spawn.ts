@@ -15,7 +15,24 @@ export function spawn(): void {
 
   const target = getConstant("SPAWN_TARGET_POPULATION");
   const population = snapshot.creeps.length;
-  if (population >= target) return;
+
+  // Proactive replacement (Story 5.2): a living, non-Spawning Creep whose
+  // ttl has dropped below the threshold gets a replacement spawned even if
+  // population is already at target, so the replacement is inbound before
+  // the old Creep dies. effectiveTarget caps this override at one Creep
+  // above target — derived fresh from the snapshot every Tick, with no
+  // persistence of "who's being replaced" (AD-9, zero-colony-Memory). This
+  // is deliberately NOT `population >= target && !hasNearDyingCreep`: that
+  // form never clears while the same Creep stays near-dying, re-firing a
+  // new spawnCreep every time the Spawn goes idle (see spec Design Notes).
+  const ttlReplacementThreshold = getConstant(
+    "SPAWN_TTL_REPLACEMENT_THRESHOLD",
+  );
+  const hasNearDyingCreep = snapshot.creeps.some(
+    (c) => !c.spawning && c.ttl > 0 && c.ttl < ttlReplacementThreshold,
+  );
+  const effectiveTarget = hasNearDyingCreep ? target + 1 : target;
+  if (population >= effectiveTarget) return;
 
   const idleSpawn = snapshot.structures.find(
     (structure) =>
@@ -38,8 +55,14 @@ export function spawn(): void {
   );
 
   if (result === OK) {
+    // A spawn can fire for either reason simultaneously (e.g. population
+    // already below target while a Creep also happens to be near-dying) —
+    // report both rather than collapsing to whichever check ran first.
+    const reasons: string[] = [];
+    if (population < target) reasons.push("population");
+    if (hasNearDyingCreep) reasons.push("ttl-replacement");
     console.log(
-      `[spawn] spawnCreep(${name}) issued, population ${population}/${target}`,
+      `[spawn] spawnCreep(${name}) issued (${reasons.join("+")}), population ${population}/${effectiveTarget}`,
     );
   } else {
     console.log(`[spawn] spawnCreep(${name}) failed: ${result}`);

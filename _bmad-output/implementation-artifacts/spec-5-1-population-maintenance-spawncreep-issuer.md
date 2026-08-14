@@ -2,7 +2,7 @@
 title: 'Population Maintenance & the spawnCreep Issuer'
 type: 'feature'
 created: '2026-08-14'
-status: 'blocked'
+status: 'done'
 review_loop_iteration: 0
 followup_review_recommended: true
 context: []
@@ -133,4 +133,6 @@ Naming: `generalist-<roomName>-<tick>` guarantees uniqueness because at most one
 **Residual risks:** None identified within this story's scope. Out-of-band note: during this run the operator was live-testing on PTR with local uncommitted tuning (`JOB_POLICY_TABLE.fill.maxWorkers` 1→6, `SPAWN_TARGET_POPULATION` 4→10) and a commented-out board-log line in `control/generate.ts`; the implementation subagent initially reverted these as unrelated drift, which was caught, restored, and generalized into a `LOG_BOARD_ENABLED` config toggle (mirroring `CPU_METERING_ENABLED`) at the operator's request — outside this story's `<intent-contract>` but folded into the same working-tree changes since it touches the same files.
 
 **Blocking condition:** all changes are implemented, verified (290/290 tests, clean typecheck, clean lint), and staged, but `git commit` is refused by this repository's pre-commit hook (`commits are disabled for agents in this repository` — requires a human operator to run `ALLOW_COMMIT=1 git commit ...`). Finalization could not commit or leave the working tree clean, so this run halts `blocked` rather than `done`. No code changes are at risk — everything is staged in the working tree, nothing needs to be redone once a human commits.
+
+**Resolution (2026-08-14):** human operator committed the staged changes as `e6113cd` ("ft: spawn control"); commit content matches this spec exactly. `status` corrected `blocked` → `done` to match `sprint-status.yaml` and the actual repository state.
 

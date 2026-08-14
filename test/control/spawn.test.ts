@@ -19,12 +19,12 @@ Object.assign(globalThis, {
   STRUCTURE_SPAWN: STRUCTURE_SPAWN_CODE,
 });
 
-function createCreep(id: string, spawning = false): CreepStub {
+function createCreep(id: string, spawning = false, ttl = 1500): CreepStub {
   return {
     id,
     pos: { x: 0, y: 0, roomName: "sim" },
     body: ["work", "carry", "move"],
-    ttl: 1500,
+    ttl,
     carry: 0,
     carryCapacity: 50,
     spawning,
@@ -204,5 +204,204 @@ describe("spawn — I/O matrix", () => {
     buildWorldSnapshot();
     expect(() => spawn()).not.toThrow();
     expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("issues a replacement spawnCreep when population is at target and a Creep is near-dying", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 100),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(console.log)).toHaveBeenCalledWith(
+      expect.stringContaining("ttl-replacement"),
+    );
+  });
+
+  // Note: the spec's I/O Matrix literally describes a "population > target,
+  // spawnCreep issued" row, but that is mathematically incompatible with the
+  // effectiveTarget = target + 1 cap the same spec mandates (Tasks &
+  // Acceptance / Design Notes): whenever population > target, population is
+  // already >= target + 1 = effectiveTarget, so the guard always blocks —
+  // for any population value. That cap is what the spec's own bad_spec
+  // review amendment introduced specifically to stop unbounded overshoot, so
+  // this test asserts the correct, non-overshooting behavior the formula
+  // actually produces rather than the literal (self-contradictory) matrix
+  // wording.
+  it("does not issue a further spawnCreep when population is already above target, even with a near-dying Creep (effectiveTarget cap)", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4"),
+      createCreep("c5", false, 50),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("does not treat a Spawning Creep (ttl reads 0) as near-dying", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", true, 0),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("throttles a near-dying replacement when every Spawn structure is busy", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 100),
+    ];
+    const spawnStub = createSpawnStub("spawn1", true);
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("issues exactly one spawnCreep when multiple Creeps are near-dying", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3", false, 80),
+      createCreep("c4", false, 90),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not re-fire a replacement across Ticks once population reaches target + 1", () => {
+    // First Tick: population at target, one Creep near-dying, idle Spawn —
+    // triggers the one allowed replacement.
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 100),
+    ];
+    const spawnStub1 = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub1], spawnCreepImpl, 100));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+
+    // Second Tick: population is now target + 1 (the replacement has been
+    // added to the population), the same Creep is still near-dying, and the
+    // Spawn is idle again. No further spawnCreep call should be made.
+    const creepsAfter = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 95),
+      createCreep("generalist-sim-100"),
+    ];
+    const spawnStub2 = createSpawnStub("spawn1", false);
+    setGame(createMockGame(creepsAfter, [spawnStub2], spawnCreepImpl, 101));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not treat a Creep at exactly the threshold ttl as near-dying", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 200),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("treats a Creep one tick below the threshold as near-dying", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 199),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports both reasons when population is below target and a Creep is also near-dying", () => {
+    const creeps = [createCreep("c1"), createCreep("c2", false, 100)];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(console.log)).toHaveBeenCalledWith(
+      expect.stringContaining("(population+ttl-replacement)"),
+    );
+  });
+
+  it("reports only the population reason when no Creep is near-dying", () => {
+    const creeps = [createCreep("c1"), createCreep("c2")];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(vi.mocked(console.log)).toHaveBeenCalledWith(
+      expect.stringContaining("(population)"),
+    );
   });
 });
