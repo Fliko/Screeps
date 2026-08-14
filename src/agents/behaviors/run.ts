@@ -11,12 +11,14 @@ import { parseJobId } from "../../board/job";
 import { getCurrentSnapshot } from "../../world/snapshot";
 import { runBuild } from "./build";
 import { runFill } from "./fill";
+import { runUpgrade } from "./upgrade";
 
 type Behavior = (creepId: string, jobId: string) => void;
 
 const BEHAVIORS: Partial<Record<JobType, Behavior>> = {
   fill: runFill,
   build: runBuild,
+  upgrade: runUpgrade,
 };
 
 export function runBehaviors(): void {

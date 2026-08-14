@@ -16,6 +16,12 @@ vi.mock("../../../src/agents/behaviors/build", () => ({
   runBuild: (creepId: string, jobId: string) => runBuildMock(creepId, jobId),
 }));
 
+const runUpgradeMock = vi.fn();
+vi.mock("../../../src/agents/behaviors/upgrade", () => ({
+  runUpgrade: (creepId: string, jobId: string) =>
+    runUpgradeMock(creepId, jobId),
+}));
+
 const { runBehaviors } = await import("../../../src/agents/behaviors/run");
 
 function createCreep(id: string, contract?: string): CreepStub {
@@ -49,6 +55,7 @@ function createMockGame(creeps: CreepStub[]): GameAdapter {
 afterEach(() => {
   runFillMock.mockClear();
   runBuildMock.mockClear();
+  runUpgradeMock.mockClear();
   setGame();
 });
 
@@ -83,13 +90,25 @@ describe("runBehaviors — dispatch", () => {
     expect(runBuildMock).toHaveBeenCalledWith("c1", "build:site1");
   });
 
-  it("is a no-op for a Contract whose Job type has no dispatch entry (upgrade)", () => {
+  it("calls runUpgrade for a Creep holding an upgrade Contract", () => {
     const creep = createCreep("c1", "upgrade:controller1");
+    setGame(createMockGame([creep]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runUpgradeMock).toHaveBeenCalledWith("c1", "upgrade:controller1");
+  });
+
+  it("is a no-op for a Contract whose Job type has no dispatch entry (mine)", () => {
+    const creep = createCreep("c1", "mine:source1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
     expect(() => runBehaviors()).not.toThrow();
     expect(runFillMock).not.toHaveBeenCalled();
+    expect(runBuildMock).not.toHaveBeenCalled();
+    expect(runUpgradeMock).not.toHaveBeenCalled();
   });
 
   it("is a no-op when there is no snapshot", () => {
