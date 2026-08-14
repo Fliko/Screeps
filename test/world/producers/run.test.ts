@@ -64,6 +64,7 @@ function createMockGame(): GameAdapter {
         progressTotal: 100,
       },
     ],
+    findSources: () => [],
     findCreeps: () => [],
     getTerrain: () => ({ get: () => 0 }),
     getObjectById: () => undefined,

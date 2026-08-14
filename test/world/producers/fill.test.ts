@@ -25,6 +25,7 @@ function snapshot(structures: SnapshotStructure[] = []): WorldSnapshot {
     roomName: "sim",
     structures,
     constructionSites: [],
+    sources: [],
     creeps: [],
   };
 }

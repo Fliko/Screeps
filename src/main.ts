@@ -1,4 +1,5 @@
 // the control cycle ONLY (AD-9) — implemented in Story 1.4
+import { runBehaviors } from "./agents/behaviors/run";
 import { getConstant } from "./config";
 import { generate } from "./control/generate";
 import { match } from "./control/match";
@@ -17,8 +18,8 @@ let booted = false;
 
 /**
  * Screeps main-module entry: called by the engine every Tick. Story 1.4 adds
- * the full five-phase AD-9 control cycle: generate → taken-set → validate →
- * match → spawn. The boot marker fires once per deploy (Story 1.2).
+ * the full six-phase AD-9 control cycle: generate → taken-set → validate →
+ * match → spawn → execute. The boot marker fires once per deploy (Story 1.2).
  */
 export function loop(): void {
   if (!booted) {
@@ -52,4 +53,5 @@ export function loop(): void {
   const cleared = measurePhase("validate", () => validate(takenSet));
   measurePhase("match", () => match(releaseContracts(takenSet, cleared)));
   measurePhase("spawn", spawn);
+  measurePhase("execute", runBehaviors);
 }

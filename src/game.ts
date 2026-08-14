@@ -46,6 +46,13 @@ export interface ControllerStub {
   owner?: string;
 }
 
+export interface SourceStub {
+  id: string;
+  pos: RoomPositionData;
+  energy: number;
+  energyCapacity: number;
+}
+
 export interface CreepStub {
   id: string;
   pos: RoomPositionData;
@@ -72,6 +79,8 @@ export interface GameAdapter {
   findMyStructures(roomName: string): StructureStub[];
   /** Return all construction sites in the room. */
   findConstructionSites(roomName: string): ConstructionSiteStub[];
+  /** Return active (harvestable) Sources in the room. */
+  findSources(roomName: string): SourceStub[];
   /** Return my creeps in the room. */
   findCreeps(roomName: string): CreepStub[];
   /** Return the room controller if one exists and is visible. */
@@ -127,6 +136,16 @@ const defaultGame: GameAdapter = {
       structureType: site.structureType,
       progress: site.progress,
       progressTotal: site.progressTotal,
+    }));
+  },
+  findSources: (roomName: string): SourceStub[] => {
+    const room = Game.rooms[roomName];
+    if (!room) return [];
+    return room.find(FIND_SOURCES_ACTIVE).map((source) => ({
+      id: source.id,
+      pos: toPos(source.pos),
+      energy: source.energy,
+      energyCapacity: source.energyCapacity,
     }));
   },
   findCreeps: (roomName: string): CreepStub[] => {

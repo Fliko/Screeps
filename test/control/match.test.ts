@@ -81,6 +81,7 @@ function createMockGame(creeps: CreepStub[]): GameAdapter {
     getRooms: () => ["sim"],
     findMyStructures: () => [],
     findConstructionSites: () => [],
+    findSources: () => [],
     findCreeps: () => creeps,
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),

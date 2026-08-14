@@ -10,6 +10,7 @@ import {
   type CreepStub,
   getGame,
   type RoomPositionData,
+  type SourceStub,
   type StructureStub,
 } from "../game";
 import { getContract } from "../state/contract";
@@ -18,6 +19,13 @@ export interface SnapshotStructure {
   id: string;
   pos: RoomPositionData;
   structureType: StructureConstant;
+  energy: number;
+  energyCapacity: number;
+}
+
+export interface SnapshotSource {
+  id: string;
+  pos: RoomPositionData;
   energy: number;
   energyCapacity: number;
 }
@@ -56,6 +64,7 @@ export interface WorldSnapshot {
   controller?: SnapshotController;
   structures: readonly SnapshotStructure[];
   constructionSites: readonly SnapshotConstructionSite[];
+  sources: readonly SnapshotSource[];
   creeps: readonly SnapshotCreep[];
 }
 
@@ -76,6 +85,7 @@ export function buildWorldSnapshot(): WorldSnapshot {
     roomName,
     structures: [],
     constructionSites: [],
+    sources: [],
     creeps: [],
   };
 
@@ -96,6 +106,7 @@ export function buildWorldSnapshot(): WorldSnapshot {
   snapshot.constructionSites = game
     .findConstructionSites(roomName)
     .map(mapConstructionSite);
+  snapshot.sources = game.findSources(roomName).map(mapSource);
   snapshot.creeps = game.findCreeps(roomName).map(mapCreep);
 
   return snapshot;
@@ -120,6 +131,15 @@ function mapConstructionSite(
     structureType: stub.structureType,
     progress: stub.progress,
     progressTotal: stub.progressTotal,
+  };
+}
+
+function mapSource(stub: SourceStub): SnapshotSource {
+  return {
+    id: stub.id,
+    pos: stub.pos,
+    energy: stub.energy,
+    energyCapacity: stub.energyCapacity,
   };
 }
 

@@ -21,6 +21,7 @@ function snapshotWithController(c?: SnapshotController): WorldSnapshot {
     controller: c,
     structures: [],
     constructionSites: [],
+    sources: [],
     creeps: [],
   };
 }

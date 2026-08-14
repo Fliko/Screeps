@@ -12,6 +12,7 @@ function createMockGame(resolve: (id: string) => unknown): GameAdapter {
     getRooms: () => ["sim"],
     findMyStructures: () => [],
     findConstructionSites: () => [],
+    findSources: () => [],
     findCreeps: () => [],
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),

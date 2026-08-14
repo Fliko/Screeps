@@ -36,6 +36,7 @@ describe("boot seam (Story 1.2)", () => {
       getRooms: () => ["sim"],
       findMyStructures: () => [],
       findConstructionSites: () => [],
+      findSources: () => [],
       findCreeps: () => [],
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),

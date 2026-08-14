@@ -18,6 +18,7 @@ function createMockGame(
     getRooms: () => ["sim"],
     findMyStructures: () => [],
     findConstructionSites: () => [],
+    findSources: () => [],
     findCreeps: () => creeps,
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
@@ -90,8 +91,8 @@ describe("Control Cycle - Phase Order (AC3)", () => {
       (log: string) => typeof log === "string" && log.includes("[control]"),
     );
 
-    // Verify we have 5 phase logs
-    expect(phaseLogs).toHaveLength(5);
+    // Verify we have 6 phase logs
+    expect(phaseLogs).toHaveLength(6);
 
     // Verify phase order
     expect(phaseLogs[0]).toContain("generate");
@@ -99,6 +100,7 @@ describe("Control Cycle - Phase Order (AC3)", () => {
     expect(phaseLogs[2]).toContain("validate");
     expect(phaseLogs[3]).toContain("match");
     expect(phaseLogs[4]).toContain("spawn");
+    expect(phaseLogs[5]).toContain("execute");
 
     // Verify each log is prefixed with [control]
     phaseLogs.forEach((log: string) => {
@@ -334,6 +336,7 @@ describe("Control Cycle - Match Wiring (Story 3.4)", () => {
       getRooms: () => ["sim"],
       findMyStructures: () => [spawn],
       findConstructionSites: () => [],
+      findSources: () => [],
       findCreeps: () => creeps,
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),

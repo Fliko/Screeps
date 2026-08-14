@@ -20,6 +20,7 @@ function snapshot(sites: SnapshotConstructionSite[] = []): WorldSnapshot {
     roomName: "sim",
     constructionSites: sites,
     structures: [],
+    sources: [],
     creeps: [],
   };
 }

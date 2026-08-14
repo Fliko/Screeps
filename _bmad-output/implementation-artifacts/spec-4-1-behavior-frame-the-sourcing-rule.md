@@ -2,7 +2,7 @@
 title: 'Story 4.1: Behavior Frame & the Sourcing Rule'
 type: 'feature'
 created: '2026-08-13'
-status: 'blocked'
+status: 'done'
 baseline_revision: 45ab53b5e1cd6ed1c0bf2fed77d882898dbbcbce
 review_loop_iteration: 0
 followup_review_recommended: false

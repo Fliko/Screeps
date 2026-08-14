@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-08-08
-last_updated: 2026-08-13
+last_updated: 2026-08-14
 project: screeps_ai
 project_key: NOKEY
 tracking_system: file-system
@@ -77,7 +77,7 @@ development_status:
   # Epic 4: The Generalist Economy — the Colony Sustains Itself
   epic-4: in-progress
   4-1-behavior-frame-the-sourcing-rule: done
-  4-2-fill-behavior: backlog
+  4-2-fill-behavior: done
   4-3-build-behavior: backlog
   4-4-upgrade-behavior: backlog
   4-5-dying-unload-economy-observation: backlog

@@ -10,6 +10,7 @@ function createMockGame(overrides?: {
   controller?: ReturnType<GameAdapter["getController"]>;
   structures?: ReturnType<GameAdapter["findMyStructures"]>;
   constructionSites?: ReturnType<GameAdapter["findConstructionSites"]>;
+  sources?: ReturnType<GameAdapter["findSources"]>;
   creeps?: ReturnType<GameAdapter["findCreeps"]>;
 }): GameAdapter {
   return {
@@ -18,6 +19,7 @@ function createMockGame(overrides?: {
     getController: () => overrides?.controller ?? undefined,
     findMyStructures: () => overrides?.structures ?? [],
     findConstructionSites: () => overrides?.constructionSites ?? [],
+    findSources: () => overrides?.sources ?? [],
     findCreeps: () => overrides?.creeps ?? [],
     getTerrain: () => ({ get: () => 0 }),
     getObjectById: () => undefined,
@@ -40,9 +42,18 @@ describe("buildWorldSnapshot", () => {
     expect(snapshot.roomName).toBe("");
     expect(snapshot.structures).toHaveLength(0);
     expect(snapshot.constructionSites).toHaveLength(0);
+    expect(snapshot.sources).toHaveLength(0);
     expect(snapshot.creeps).toHaveLength(0);
     expect(snapshot.controller).toBeUndefined();
     expect(getCurrentSnapshot()).toBe(snapshot);
+  });
+
+  it("builds an empty sources array when the room has no active Sources", () => {
+    setGame(createMockGame());
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.sources).toHaveLength(0);
   });
 
   it("maps the controller, structures, construction sites, and creeps", () => {
@@ -79,6 +90,14 @@ describe("buildWorldSnapshot", () => {
             structureType: "container",
             progress: 10,
             progressTotal: 100,
+          },
+        ],
+        sources: [
+          {
+            id: "source1" as Id<Source>,
+            pos: { x: 20, y: 20, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
           },
         ],
         creeps: [
@@ -124,6 +143,14 @@ describe("buildWorldSnapshot", () => {
       structureType: "container",
       progress: 10,
       progressTotal: 100,
+    });
+
+    expect(snapshot.sources).toHaveLength(1);
+    expect(snapshot.sources[0]).toEqual({
+      id: "source1",
+      pos: { x: 20, y: 20, roomName: "sim" },
+      energy: 1500,
+      energyCapacity: 3000,
     });
 
     expect(snapshot.creeps).toHaveLength(1);
@@ -218,6 +245,7 @@ describe("WorldSnapshot as plain data", () => {
         },
       ],
       constructionSites: [],
+      sources: [],
       creeps: [],
     };
 
