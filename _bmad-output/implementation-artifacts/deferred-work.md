@@ -45,3 +45,21 @@
 
 - `selectJob` in `src/control/match.ts` never checks `job.requirements.body` against `creep.body` — a Creep with the wrong Body parts (e.g. no `work`) can still be matched to and keep a `fill`/`build`/`upgrade` Job. Same gap already deferred from Story 3.3's validators (`requirements.body` never checked there either); MVP has only one Body composition (Generalist) so it's currently unreachable — deferred until Epic 6 introduces Specialist Bodies with different part sets.
 - `job.maxWorkers` is never validated to be a positive number before `selectJob` compares a running count against it — a `0` or negative `maxWorkers` slipping through a future Producer/config bug would silently make that Job unselectable with no diagnostic. Deferred; `config.ts`'s `JOB_POLICY_TABLE` is hand-authored and currently the only source of `maxWorkers`, so this is not reachable today — belongs with Producer/policy-table validation if one is ever added, not with Matching.
+
+## Deferred from: bmad-review of Story 3.5 movement choke point (2026-08-13)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-5-movement-choke-point-review-fixes.md`
+  summary: Tighten movement/state test assertions from `expect.objectContaining`/`expect.any(Number)` to exact expected values (opts objects and computed `lastPos`), so an accidental `reusePath`/`packPos` regression would actually fail a test.
+  evidence: Adversarial and verification-gap lenses both flagged that partial-match assertions (`objectContaining`, `expect.any(Number)`) would pass even if the underlying value drifted — the tests exist but don't pin the exact contract.
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-5-movement-choke-point-review-fixes.md`
+  summary: Remove the unused `_unpackPos` function from `src/agents/movement.ts` (dead code — no caller, no test).
+  evidence: Adversarial and verification-gap (missing-adoption-gap) lenses both flagged it as untested, uncalled code kept only for "future use."
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-5-movement-choke-point-review-fixes.md`
+  summary: Add one line to README.md's Movement note documenting that `moveCreep` in `agents/movement.ts` is the sole sanctioned move call site, so future Epic 4 behaviors don't reach for `creep.moveTo` directly.
+  evidence: Adversarial lens noted AC1's single-choke-point requirement has no discoverable developer-facing statement — only a manual grep check in the story file.
+
+## Deferred from: bmad-build review of spec-3-5-movement-choke-point-review-fixes (2026-08-13)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-3-5-movement-choke-point-review-fixes.md`
+  summary: `getMoveState` in `src/state/move.ts` validates `lastPos` is a finite number but not that it falls in the valid packed-position range (0-2499, per `y * 50 + x` with x,y ∈ [0,49]) or is an integer — a finite-but-out-of-range or fractional `lastPos` currently passes validation and would decode to a bogus or off-map position.
+  evidence: Edge-case-hunter lens flagged this on the review of the `lastPos` NaN/Infinity fix. Deliberately out of this spec's narrowed scope — the spec's own Boundaries section anticipated range validation might follow ("out-of-range is a validation failure, not a value to coerce") but the Tasks section scoped only NaN/Infinity to keep the hardening pass small per the human's split decision.

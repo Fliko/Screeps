@@ -13,6 +13,24 @@ describe("getMoveState", () => {
     const creep = { memory: { move: moveState } };
     expect(getMoveState(creep)).toEqual(moveState);
   });
+
+  it("returns the MoveState when lastPos is 0 (falsy but valid packed position)", () => {
+    const moveState: MoveState = { lastPos: 0, stuck: 0 };
+    const creep = { memory: { move: moveState } };
+    expect(getMoveState(creep)).toEqual(moveState);
+  });
+
+  it("returns undefined when lastPos is NaN", () => {
+    const creep = { memory: { move: { lastPos: NaN, stuck: 2 } as MoveState } };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
+
+  it("returns undefined when lastPos is Infinity", () => {
+    const creep = {
+      memory: { move: { lastPos: Infinity, stuck: 0 } as MoveState },
+    };
+    expect(getMoveState(creep)).toBeUndefined();
+  });
 });
 
 describe("setMoveState", () => {

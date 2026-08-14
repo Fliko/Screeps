@@ -92,6 +92,61 @@ const constants: Config = {
 };
 
 /**
+ * Validates the movement-related slice of a Config object, throwing on the
+ * first violation found. Fails fast at module load (called once against
+ * `constants` below) so a bad literal (e.g. threshold `0`, a `MoveToOpts`
+ * missing `reusePath`) breaks the build instead of misbehaving silently at
+ * runtime (Story 3.5 review hardening).
+ *
+ * Exported so tests can call it directly with crafted `Config`-shaped
+ * objects without mutating module-level state.
+ */
+export function validateMovementConfig(config: Config): void {
+  const {
+    MOVEMENT_STUCK_THRESHOLD,
+    MOVEMENT_DEFAULT_OPTS,
+    MOVEMENT_REPATH_OPTS,
+  } = config;
+
+  if (
+    typeof MOVEMENT_STUCK_THRESHOLD !== "number" ||
+    !Number.isInteger(MOVEMENT_STUCK_THRESHOLD) ||
+    MOVEMENT_STUCK_THRESHOLD <= 0
+  ) {
+    throw new Error(
+      `Invalid config constant MOVEMENT_STUCK_THRESHOLD: must be a positive integer, got ${MOVEMENT_STUCK_THRESHOLD}`,
+    );
+  }
+
+  for (const [name, opts] of [
+    ["MOVEMENT_DEFAULT_OPTS", MOVEMENT_DEFAULT_OPTS],
+    ["MOVEMENT_REPATH_OPTS", MOVEMENT_REPATH_OPTS],
+  ] as const) {
+    if (!opts || typeof opts !== "object") {
+      throw new Error(
+        `Invalid config constant ${name}: expected an object, got ${opts}`,
+      );
+    }
+    if (
+      typeof opts.reusePath !== "number" ||
+      !Number.isFinite(opts.reusePath) ||
+      opts.reusePath < 0
+    ) {
+      throw new Error(
+        `Invalid config constant ${name}: missing "reusePath", got ${opts.reusePath}`,
+      );
+    }
+    if (typeof opts.ignoreCreeps !== "boolean") {
+      throw new Error(
+        `Invalid config constant ${name}: missing "ignoreCreeps", got ${opts.ignoreCreeps}`,
+      );
+    }
+  }
+}
+
+validateMovementConfig(constants);
+
+/**
  * Retrieves a configuration constant by name.
  * Story 1.4: enables test mocking of config values.
  */

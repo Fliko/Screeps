@@ -24,8 +24,11 @@ export interface MoveState {
  * Reads `creep.memory.move`.
  *
  * Returns the typed MoveState if the persisted object exists and has the
- * expected shape (with valid numeric `stuck`), otherwise returns `undefined`.
- * Validates that `stuck` is a number to prevent NaN from arithmetic operations.
+ * expected shape (with valid numeric `stuck` and `lastPos`), otherwise
+ * returns `undefined`. Validates that `stuck` and `lastPos` are finite
+ * numbers to prevent NaN/Infinity from malformed memory silently disabling
+ * stuck detection; a corrupted value self-heals by causing the caller to
+ * re-initialize state on the next call.
  */
 export function getMoveState(creep: {
   memory: { move?: MoveState };
@@ -36,6 +39,10 @@ export function getMoveState(creep: {
   }
   // Validate stuck is a number (not null/undefined/NaN from malformed memory).
   if (typeof state.stuck !== "number" || !Number.isFinite(state.stuck)) {
+    return undefined;
+  }
+  // Validate lastPos is a number (not null/undefined/NaN/Infinity from malformed memory).
+  if (typeof state.lastPos !== "number" || !Number.isFinite(state.lastPos)) {
     return undefined;
   }
   return state;
