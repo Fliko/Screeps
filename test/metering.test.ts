@@ -28,6 +28,7 @@ describe("measurePhase", () => {
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
       getTime: () => 0,
+      getEnergyAvailable: () => 300,
       getObjectById: () => undefined,
     };
     setGame(mockGame);
@@ -55,6 +56,7 @@ describe("measurePhase", () => {
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
       getTime: () => 0,
+      getEnergyAvailable: () => 300,
       getObjectById: () => undefined,
     });
 
@@ -84,6 +86,7 @@ describe("measurePhase", () => {
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
       getTime: () => 0,
+      getEnergyAvailable: () => 300,
       getObjectById: () => undefined,
     };
     setGame(mockGame);

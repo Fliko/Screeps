@@ -17,6 +17,7 @@ function createMockGame(resolve: (id: string) => unknown): GameAdapter {
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
     getTime: () => 0,
+    getEnergyAvailable: () => 300,
     getObjectById: ((id: string) =>
       resolve(id)) as GameAdapter["getObjectById"],
   };

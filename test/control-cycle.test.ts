@@ -29,6 +29,7 @@ function createMockGame(
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
     getTime: () => 0,
+    getEnergyAvailable: () => 300,
     // Screeps resolves ids to live objects; the Creep stubs stand in for them so
     // world/creeps.ts can clear real memory in the wiring tests.
     getObjectById: ((id: string) =>
@@ -360,6 +361,7 @@ describe("Control Cycle - Match Wiring (Story 3.4)", () => {
         getController: () => undefined,
         getTerrain: () => ({ get: () => 0 }),
         getTime: () => 0,
+        getEnergyAvailable: () => 300,
         getObjectById: ((id: string) =>
           creeps.find(
             (creep) => creep.id === id,

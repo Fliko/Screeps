@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getConstant, setConstant } from "../../src/config";
-import { spawn } from "../../src/control/spawn";
+import { selectSpawnReason, spawn } from "../../src/control/spawn";
 import type { CreepStub, GameAdapter, StructureStub } from "../../src/game";
 import { setGame } from "../../src/game";
 import * as snapshotModule from "../../src/world/snapshot";
@@ -52,6 +52,7 @@ function createMockGame(
     opts?: SpawnOptions,
   ) => ScreepsReturnCode,
   tick = 100,
+  energyAvailable = 300,
 ): GameAdapter {
   const liveSpawns = new Map<string, { spawnCreep: typeof spawnCreepImpl }>();
   for (const structure of structures) {
@@ -70,6 +71,7 @@ function createMockGame(
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
     getTime: () => tick,
+    getEnergyAvailable: () => energyAvailable,
     getObjectById: ((id: string) =>
       liveSpawns.get(id)) as GameAdapter["getObjectById"],
   };
@@ -86,6 +88,42 @@ afterEach(() => {
   setConstant("SPAWN_TARGET_POPULATION", 4);
 });
 
+describe("selectSpawnReason — I/O Matrix", () => {
+  it("returns 'reserved-vacancy' when all three reasons are present", () => {
+    const present = [
+      "population-topup",
+      "demand-pressure",
+      "reserved-vacancy",
+    ] as const;
+    const result = selectSpawnReason(present);
+    expect(result).toBe("reserved-vacancy");
+  });
+
+  it("returns 'demand-pressure' when reserved-vacancy is absent but demand-pressure and population-topup are present", () => {
+    const present = ["population-topup", "demand-pressure"] as const;
+    const result = selectSpawnReason(present);
+    expect(result).toBe("demand-pressure");
+  });
+
+  it("returns 'population-topup' when only population-topup is present", () => {
+    const present = ["population-topup"] as const;
+    const result = selectSpawnReason(present);
+    expect(result).toBe("population-topup");
+  });
+
+  it("returns undefined when nothing is present", () => {
+    const present: readonly never[] = [];
+    const result = selectSpawnReason(present);
+    expect(result).toBeUndefined();
+  });
+
+  it("returns 'population-topup' when duplicate entries are present (order-stable, no double-count)", () => {
+    const present = ["population-topup", "population-topup"] as const;
+    const result = selectSpawnReason(present);
+    expect(result).toBe("population-topup");
+  });
+});
+
 describe("spawn — I/O matrix", () => {
   it("issues spawnCreep when below target with an idle Spawn", () => {
     const creeps = [createCreep("c1"), createCreep("c2")];
@@ -98,7 +136,7 @@ describe("spawn — I/O matrix", () => {
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
     expect(spawnCreepImpl).toHaveBeenCalledWith(
-      getConstant("SPAWN_BODY_GENERALIST"),
+      getConstant("BODY_COMPOSITIONS").generalist.parts,
       "generalist-sim-100",
       { memory: {} },
     );
@@ -403,5 +441,49 @@ describe("spawn — I/O matrix", () => {
     expect(vi.mocked(console.log)).toHaveBeenCalledWith(
       expect.stringContaining("(population)"),
     );
+  });
+
+  it("does not spawn when energyAvailable is below cost (population trigger)", () => {
+    const creeps = [createCreep("c1"), createCreep("c2")];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    const cost = getConstant("BODY_COMPOSITIONS").generalist.cost;
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100, cost - 1));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("spawns when energyAvailable equals cost (exact-cost boundary)", () => {
+    const creeps = [createCreep("c1"), createCreep("c2")];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    const cost = getConstant("BODY_COMPOSITIONS").generalist.cost;
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100, cost));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not spawn when energyAvailable is below cost (TTL-replacement trigger)", () => {
+    const creeps = [
+      createCreep("c1"),
+      createCreep("c2"),
+      createCreep("c3"),
+      createCreep("c4", false, 100),
+    ];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    const cost = getConstant("BODY_COMPOSITIONS").generalist.cost;
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100, cost - 1));
+
+    buildWorldSnapshot();
+    spawn();
+
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
 });

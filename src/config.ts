@@ -23,6 +23,24 @@ export interface JobTypePolicy {
   requirements: { body: BodyPartConstant[]; ttlFloor: number };
 }
 
+/** One body composition with its cost. */
+export interface BodyComposition {
+  parts: BodyPartConstant[];
+  cost: number;
+}
+
+/** Kind of body composition. */
+export type BodyKind = "generalist";
+
+/** Body composition table, keyed by kind (Story 5.3). */
+export type BodyCompositionTable = Record<BodyKind, BodyComposition>;
+
+/** Reason a spawn was issued — priority-ordered (Story 5.4). */
+export type SpawnPriorityReason =
+  | "reserved-vacancy"
+  | "demand-pressure"
+  | "population-topup";
+
 /**
  * Per-type policy table, keyed over the three active Generalist-era Job types.
  * `mine` is intentionally absent — the mine Producer + its policy (maxWorkers 1,
@@ -54,10 +72,12 @@ export interface Config {
   CREEP_DYING_TTL_THRESHOLD: number;
   /** Population-maintenance target — control/spawn tops up to this Creep count (Story 5.1). Pinned to 4; see spec Design Notes. */
   SPAWN_TARGET_POPULATION: number;
-  /** Body composition control/spawn requests for population top-up (Story 5.1) — reuses the Generalist Body all three Jobs require. */
-  SPAWN_BODY_GENERALIST: BodyPartConstant[];
+  /** Body composition table — typed home for Body definitions and their costs (Story 5.3). */
+  BODY_COMPOSITIONS: BodyCompositionTable;
   /** Near-dying replacement threshold — a living, non-Spawning Creep with ttl below this triggers a proactive replacement spawn (Story 5.2). Matches the fill/build Job policy ttlFloor of 200. */
   SPAWN_TTL_REPLACEMENT_THRESHOLD: number;
+  /** Fixed priority order for spawn issuance reasons — read by selectSpawnReason (Story 5.4, FR-17). */
+  SPAWN_PRIORITY_ORDER: readonly SpawnPriorityReason[];
 }
 
 const constants: Config = {
@@ -87,7 +107,7 @@ const constants: Config = {
       withinTierPriority: 0,
       maxWorkers: Infinity,
       assignmentMode: "pulled",
-      lifetimeClass: "transient",
+      lifetimeClass: "persistent",
       requirements: { body: GENERALIST_BODY, ttlFloor: 0 },
     },
   },
@@ -102,8 +122,15 @@ const constants: Config = {
   },
   CREEP_DYING_TTL_THRESHOLD: 50,
   SPAWN_TARGET_POPULATION: 10,
-  SPAWN_BODY_GENERALIST: GENERALIST_BODY,
+  BODY_COMPOSITIONS: {
+    generalist: { parts: GENERALIST_BODY, cost: 200 },
+  },
   SPAWN_TTL_REPLACEMENT_THRESHOLD: 200,
+  SPAWN_PRIORITY_ORDER: [
+    "reserved-vacancy",
+    "demand-pressure",
+    "population-topup",
+  ],
 };
 
 /**

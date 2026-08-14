@@ -15,10 +15,11 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
     MOVEMENT_REPATH_OPTS: { reusePath: 5, ignoreCreeps: true },
     CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
     SPAWN_TARGET_POPULATION: getConstant("SPAWN_TARGET_POPULATION"),
-    SPAWN_BODY_GENERALIST: getConstant("SPAWN_BODY_GENERALIST"),
+    BODY_COMPOSITIONS: getConstant("BODY_COMPOSITIONS"),
     SPAWN_TTL_REPLACEMENT_THRESHOLD: getConstant(
       "SPAWN_TTL_REPLACEMENT_THRESHOLD",
     ),
+    SPAWN_PRIORITY_ORDER: getConstant("SPAWN_PRIORITY_ORDER"),
     ...overrides,
   };
 }
@@ -41,10 +42,11 @@ describe("validateMovementConfig", () => {
         MOVEMENT_REPATH_OPTS: getConstant("MOVEMENT_REPATH_OPTS"),
         CREEP_DYING_TTL_THRESHOLD: getConstant("CREEP_DYING_TTL_THRESHOLD"),
         SPAWN_TARGET_POPULATION: getConstant("SPAWN_TARGET_POPULATION"),
-        SPAWN_BODY_GENERALIST: getConstant("SPAWN_BODY_GENERALIST"),
+        BODY_COMPOSITIONS: getConstant("BODY_COMPOSITIONS"),
         SPAWN_TTL_REPLACEMENT_THRESHOLD: getConstant(
           "SPAWN_TTL_REPLACEMENT_THRESHOLD",
         ),
+        SPAWN_PRIORITY_ORDER: getConstant("SPAWN_PRIORITY_ORDER"),
       }),
     ).not.toThrow();
   });

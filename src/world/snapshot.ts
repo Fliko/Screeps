@@ -65,6 +65,8 @@ export interface WorldSnapshot {
   roomName: string;
   /** Current Tick number, from `game.getTime()` (Story 5.1) — used for unique Creep naming. */
   tick: number;
+  /** Available energy in the room (Spawn + Extensions aggregate), from `game.getEnergyAvailable()` (Story 5.3). */
+  energyAvailable: number;
   controller?: SnapshotController;
   structures: readonly SnapshotStructure[];
   constructionSites: readonly SnapshotConstructionSite[];
@@ -88,6 +90,7 @@ export function buildWorldSnapshot(): WorldSnapshot {
   const snapshot: WorldSnapshot = {
     roomName,
     tick: game.getTime(),
+    energyAvailable: 0,
     structures: [],
     constructionSites: [],
     sources: [],
@@ -101,6 +104,8 @@ export function buildWorldSnapshot(): WorldSnapshot {
   if (!roomName) {
     return snapshot;
   }
+
+  snapshot.energyAvailable = game.getEnergyAvailable(roomName);
 
   const controller = game.getController(roomName);
   if (controller) {

@@ -41,6 +41,7 @@ describe("boot seam (Story 1.2)", () => {
       getController: () => undefined,
       getTerrain: () => ({ get: () => 0 }),
       getTime: () => 0,
+      getEnergyAvailable: () => 300,
       getObjectById: () => undefined,
     };
 

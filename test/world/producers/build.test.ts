@@ -19,6 +19,7 @@ function snapshot(sites: SnapshotConstructionSite[] = []): WorldSnapshot {
   return {
     roomName: "sim",
     tick: 0,
+    energyAvailable: 0,
     constructionSites: sites,
     structures: [],
     sources: [],

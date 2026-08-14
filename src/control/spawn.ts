@@ -5,13 +5,36 @@
  * Population = snapshot.creeps.length (Spawning Creeps already appear there,
  * per world/snapshot.ts#mapCreep, so they count without extra bookkeeping).
  */
+import type { SpawnPriorityReason } from "../config";
 import { getConstant } from "../config";
 import { resolveObject } from "../world/objects";
 import { getCurrentSnapshot } from "../world/snapshot";
 
+/**
+ * Selects a spawn reason from a list of present reasons using the fixed
+ * priority order (Story 5.4). Returns the first reason in SPAWN_PRIORITY_ORDER
+ * that exists in the present list, or undefined if none are present.
+ *
+ * Pure function — independently unit-testable with fabricated reason arrays.
+ */
+export function selectSpawnReason(
+  present: readonly SpawnPriorityReason[],
+): SpawnPriorityReason | undefined {
+  const priorityOrder = getConstant("SPAWN_PRIORITY_ORDER");
+  for (const reason of priorityOrder) {
+    if (present.includes(reason)) {
+      return reason;
+    }
+  }
+  return undefined;
+}
+
 export function spawn(): void {
   const snapshot = getCurrentSnapshot();
   if (!snapshot) return;
+
+  const { parts, cost } = getConstant("BODY_COMPOSITIONS").generalist;
+  if (snapshot.energyAvailable < cost) return;
 
   const target = getConstant("SPAWN_TARGET_POPULATION");
   const population = snapshot.creeps.length;
@@ -32,7 +55,20 @@ export function spawn(): void {
     (c) => !c.spawning && c.ttl > 0 && c.ttl < ttlReplacementThreshold,
   );
   const effectiveTarget = hasNearDyingCreep ? target + 1 : target;
-  if (population >= effectiveTarget) return;
+
+  // Build present reasons from existing population/TTL-replacement computation
+  // (Story 5.4: Epic 5 never adds "reserved-vacancy"/"demand-pressure" here,
+  // that's Epic 6's job on this same function).
+  const present: SpawnPriorityReason[] = [];
+  if (population < effectiveTarget) {
+    present.push("population-topup");
+  }
+
+  // Select the highest-priority reason via the shared selection function,
+  // proving the ordering machinery without changing observable Generalist-era
+  // behavior (all Ticks with any present reason pass here, no new early-returns).
+  const selectedReason = selectSpawnReason(present);
+  if (!selectedReason) return;
 
   const idleSpawn = snapshot.structures.find(
     (structure) =>
@@ -48,11 +84,7 @@ export function spawn(): void {
   // Epic 6's Reserved-slot spawning, this is not a case where AD-2
   // write-ownership requires a Contract written at spawnCreep time. The new
   // Creep is simply picked up by `match` next Tick like any other idle Creep.
-  const result = liveSpawn.spawnCreep(
-    getConstant("SPAWN_BODY_GENERALIST"),
-    name,
-    { memory: {} },
-  );
+  const result = liveSpawn.spawnCreep(parts, name, { memory: {} });
 
   if (result === OK) {
     // A spawn can fire for either reason simultaneously (e.g. population

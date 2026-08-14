@@ -68,6 +68,7 @@ function createMockGame(): GameAdapter {
     findCreeps: () => [],
     getTerrain: () => ({ get: () => 0 }),
     getTime: () => 0,
+    getEnergyAvailable: () => 300,
     getObjectById: () => undefined,
   };
 }

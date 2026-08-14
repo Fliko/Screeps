@@ -93,6 +93,8 @@ export interface GameAdapter {
   getObjectById<T extends _HasId>(id: Id<T> | string): T | undefined;
   /** Return the current Tick number (wraps Game.time). */
   getTime(): number;
+  /** Return available energy in the room (Spawn + Extensions aggregate). */
+  getEnergyAvailable(roomName: string): number;
 }
 
 function toPos(pos: RoomPosition): RoomPositionData {
@@ -190,6 +192,8 @@ const defaultGame: GameAdapter = {
   getObjectById: <T extends _HasId>(id: Id<T> | string): T | undefined =>
     Game.getObjectById(id as Id<T>) ?? undefined,
   getTime: () => Game.time,
+  getEnergyAvailable: (roomName: string): number =>
+    Game.rooms[roomName]?.energyAvailable ?? 0,
 };
 
 /**

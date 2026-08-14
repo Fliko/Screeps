@@ -19,6 +19,7 @@ function snapshotWithController(c?: SnapshotController): WorldSnapshot {
   return {
     roomName: "sim",
     tick: 0,
+    energyAvailable: 0,
     controller: c,
     structures: [],
     constructionSites: [],

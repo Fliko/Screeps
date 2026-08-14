@@ -42,6 +42,7 @@ function createMockGame(creeps: CreepStub[]): GameAdapter {
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
     getTime: () => 0,
+    getEnergyAvailable: () => 300,
     // Screeps ids resolve to the live object; the test stubs stand in for Creeps.
     getObjectById: ((id: string) =>
       creeps.find((creep) => creep.id === id)) as GameAdapter["getObjectById"],

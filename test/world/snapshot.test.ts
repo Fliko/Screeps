@@ -12,6 +12,7 @@ function createMockGame(overrides?: {
   constructionSites?: ReturnType<GameAdapter["findConstructionSites"]>;
   sources?: ReturnType<GameAdapter["findSources"]>;
   creeps?: ReturnType<GameAdapter["findCreeps"]>;
+  energyAvailable?: number;
 }): GameAdapter {
   return {
     cpu: { getUsed: () => 0 },
@@ -23,6 +24,7 @@ function createMockGame(overrides?: {
     findCreeps: () => overrides?.creeps ?? [],
     getTerrain: () => ({ get: () => 0 }),
     getTime: () => 0,
+    getEnergyAvailable: () => overrides?.energyAvailable ?? 0,
     getObjectById: () => undefined,
   };
 }
@@ -223,6 +225,25 @@ describe("buildWorldSnapshot", () => {
     expect(snapshot.creeps[0].contract).toBeUndefined();
     expect(snapshot.creeps[1].contract).toBeUndefined();
   });
+
+  it("propagates energyAvailable from the game adapter onto the snapshot", () => {
+    setGame(createMockGame({ energyAvailable: 425 }));
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.energyAvailable).toBe(425);
+  });
+
+  it("defaults energyAvailable to 0 when no rooms are visible", () => {
+    setGame({
+      ...createMockGame(),
+      getRooms: () => [],
+    });
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.energyAvailable).toBe(0);
+  });
 });
 
 describe("WorldSnapshot as plain data", () => {
@@ -230,6 +251,7 @@ describe("WorldSnapshot as plain data", () => {
     const snapshot: WorldSnapshot = {
       roomName: "sim",
       tick: 0,
+      energyAvailable: 250,
       controller: {
         id: "controller1",
         pos: { x: 10, y: 20, roomName: "sim" },
@@ -253,5 +275,6 @@ describe("WorldSnapshot as plain data", () => {
 
     expect(snapshot.roomName).toBe("sim");
     expect(snapshot.structures).toHaveLength(1);
+    expect(snapshot.energyAvailable).toBe(250);
   });
 });
