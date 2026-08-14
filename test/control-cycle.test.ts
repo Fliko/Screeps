@@ -21,16 +21,24 @@ function createMockGame(
     findCreeps: () => creeps,
     getController: () => undefined,
     getTerrain: () => ({ get: () => 0 }),
-    getObjectById: () => undefined,
+    // Screeps resolves ids to live objects; the Creep stubs stand in for them so
+    // world/creeps.ts can clear real memory in the wiring tests.
+    getObjectById: ((id: string) =>
+      creeps.find((creep) => creep.id === id)) as GameAdapter["getObjectById"],
   };
 }
 
 /**
- * A Creep as the adapter sees it. `ttl` 0 models a Creep still Spawning —
- * `spawnCreep` puts it in FIND_MY_CREEPS immediately with its Reserved
- * Contract already written, and `ticksToLive` undefined maps to 0.
+ * A Creep as the adapter sees it. `spawning: true` models a Creep still being
+ * spawned — `spawnCreep` puts it in FIND_MY_CREEPS immediately with its Reserved
+ * Contract already written, and its `ticksToLive` is undefined (mapped to 0).
  */
-function createCreep(id: string, contract?: string, ttl = 1500): CreepStub {
+function createCreep(
+  id: string,
+  contract?: string,
+  ttl = 1500,
+  spawning = false,
+): CreepStub {
   return {
     id,
     pos: { x: 0, y: 0, roomName: "sim" },
@@ -38,6 +46,7 @@ function createCreep(id: string, contract?: string, ttl = 1500): CreepStub {
     ttl,
     carry: 0,
     carryCapacity: 50,
+    spawning,
     memory: contract === undefined ? {} : { contract },
   };
 }
@@ -213,7 +222,10 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
 
   it("counts the Contract of a Creep that is still Spawning (AC3)", async () => {
     setGame(
-      createMockGame(() => 0, [createCreep("spawning1", "mine:source1", 0)]),
+      createMockGame(
+        () => 0,
+        [createCreep("spawning1", "mine:source1", 0, true)],
+      ),
     );
     const validateSpy = vi.spyOn(validateModule, "validate");
 
@@ -257,5 +269,25 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
 
     const taken = matchSpy.mock.calls[0]?.[0] as TakenSet;
     expect(getTakenCount(taken, "fill:spawn1")).toBe(1);
+  });
+
+  it("clears a Contract whose target is absent and releases it before match", async () => {
+    // No structures in the mock room, so the fill Job is not on this Tick's Board.
+    const creep = createCreep("c1", "fill:spawn1");
+    setGame(createMockGame(() => 0, [creep]));
+    const validateSpy = vi.spyOn(validateModule, "validate");
+    const matchSpy = vi.spyOn(matchModule, "match");
+
+    const { loop } = await import("../src/main");
+    loop();
+
+    // The Contract was counted when validate ran...
+    const beforeRelease = validateSpy.mock.calls[0]?.[0] as TakenSet;
+    expect(getTakenCount(beforeRelease, "fill:spawn1")).toBe(1);
+    // ...and released by the time match reads capacity.
+    const afterRelease = matchSpy.mock.calls[0]?.[0] as TakenSet;
+    expect(getTakenCount(afterRelease, "fill:spawn1")).toBe(0);
+    // The real Creep's memory was mutated, not just the reported taken-set.
+    expect(creep.memory.contract).toBeUndefined();
   });
 });

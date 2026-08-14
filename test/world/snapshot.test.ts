@@ -134,8 +134,33 @@ describe("buildWorldSnapshot", () => {
       ttl: 100,
       carry: 25,
       carryCapacity: 50,
+      // The adapter stub omits `spawning`; mapCreep normalizes it to false.
+      spawning: false,
       contract: "fill:site1",
     });
+  });
+
+  it("carries the adapter's spawning flag through to the snapshot", () => {
+    setGame(
+      createMockGame({
+        creeps: [
+          {
+            id: "spawning1",
+            pos: { x: 1, y: 1, roomName: "sim" },
+            body: ["work", "carry", "move"],
+            ttl: 0,
+            carry: 0,
+            carryCapacity: 50,
+            spawning: true,
+            memory: { contract: "fill:site1" },
+          },
+        ],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.creeps[0]?.spawning).toBe(true);
   });
 
   it("drops invalid or missing creep contracts from the snapshot", () => {

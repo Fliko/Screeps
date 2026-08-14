@@ -50,6 +50,8 @@ export interface CreepStub {
   ttl: number;
   carry: number;
   carryCapacity: number;
+  /** True while the Creep is still being spawned — `ticksToLive` is undefined then. */
+  spawning?: boolean;
   memory: { contract?: string };
 }
 
@@ -134,6 +136,7 @@ const defaultGame: GameAdapter = {
       ttl: creep.ticksToLive ?? 0,
       carry: creep.carry.energy ?? 0,
       carryCapacity: creep.carryCapacity,
+      spawning: creep.spawning,
       memory: {
         // Adapter mapping: the raw string is validated in world/snapshot.ts via getContract.
         // game.ts stays below business logic and does not import state/.

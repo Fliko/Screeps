@@ -46,6 +46,8 @@ export interface SnapshotCreep {
   ttl: number;
   carry: number;
   carryCapacity: number;
+  /** True while the Creep is still being spawned (its `ttl` reads 0 regardless). */
+  spawning?: boolean;
   contract?: string;
 }
 
@@ -140,6 +142,7 @@ function mapCreep(stub: CreepStub): SnapshotCreep {
     ttl: stub.ttl,
     carry: stub.carry,
     carryCapacity: stub.carryCapacity,
+    spawning: stub.spawning ?? false,
     contract: getContract(stub)?.jobId,
   };
 }

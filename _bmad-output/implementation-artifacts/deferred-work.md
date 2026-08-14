@@ -30,3 +30,12 @@
 - `spawn` phase is not given the `TakenSet`, though Reserved-slot spawning (FR-16) needs capacity data to avoid double-filling [src/main.ts:167] — deferred to Epic 5, which owns spawn queueing; passing it now would add an unused parameter with no consumer.
 - Contracts naming a `jobId` that is absent from this Tick's Board are still counted toward capacity [src/control/taken.ts:102] — deferred to Story 3.3, which owns validators and clears invalid Contracts per FR-9.
 - `hasCapacity` is only tested against locally-built Jobs, never against Jobs produced by `world/producers/` from `JOB_POLICY_TABLE` [test/control/taken.test.ts] — deferred to Story 3.4, where Matching becomes the first production consumer.
+
+
+## Deferred from: code review of story 3.3 (2026-08-13)
+
+- `requirements.body` is never validated, only `requirements.ttlFloor` — a Creep that loses its WORK/CARRY parts keeps a Contract it can no longer perform (FR-4) [src/agents/validators.ts] — deferred; not in Story 3.3's AC, and body loss has no current in-game trigger at MVP scope (no dismemberment mechanic in play).
+- `validate` clears Memory but leaves the current Tick's `snapshot.creeps[i].contract` set for the rest of the Tick [src/control/validate.ts, src/world/snapshot.ts:143] — deferred to Story 3.4; `match` must read Memory/the taken-set post-validate, not assume the snapshot's Contract field is current.
+- `createMockGame`/`createCreep` test fixtures are duplicated across `test/control-cycle.test.ts`, `test/world/creeps.test.ts`, and `test/control/validate.test.ts`, each with slightly divergent shapes — deferred cleanup; a shared `test/helpers/game.ts` factory would prevent drift the next time `GameAdapter` gains a method.
+- `releaseContracts`' partial-decrement branch (two Creeps on one Job, one cleared, count 2→1) is unit-tested (Story 3.2) but not exercised at the `loop()` integration level — deferred; the underlying logic is covered, this is additional confidence only.
+- Malformed `creep.memory.contract` strings are never cleaned up — `getContract` (Story 3.1) already treats them as "no contract" so `validate` never sees them, but the raw junk string persists in Memory indefinitely — deferred; a Memory garbage-collection pass would need to scan `Memory.creeps` directly, out of scope for any current story.
