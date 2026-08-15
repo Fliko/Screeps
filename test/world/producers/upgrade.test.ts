@@ -20,6 +20,7 @@ function snapshotWithController(c?: SnapshotController): WorldSnapshot {
     roomName: "sim",
     tick: 0,
     energyAvailable: 0,
+    era: "generalist",
     controller: c,
     structures: [],
     constructionSites: [],

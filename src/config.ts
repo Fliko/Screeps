@@ -30,7 +30,7 @@ export interface BodyComposition {
 }
 
 /** Kind of body composition. */
-export type BodyKind = "generalist";
+export type BodyKind = "generalist" | "harvester" | "collector";
 
 /** Body composition table, keyed by kind (Story 5.3). */
 export type BodyCompositionTable = Record<BodyKind, BodyComposition>;
@@ -42,14 +42,26 @@ export type SpawnPriorityReason =
   | "population-topup";
 
 /**
- * Per-type policy table, keyed over the three active Generalist-era Job types.
- * `mine` is intentionally absent — the mine Producer + its policy (maxWorkers 1,
- * reserved) land with the Evolution epic (Story 6.2; PRD FR-29; reconcile G4).
+ * Per-type policy table, keyed over all active Job types (Generalist + Specialist eras).
  */
-export type JobPolicyTable = Record<Exclude<JobType, "mine">, JobTypePolicy>;
+export type JobPolicyTable = Record<JobType, JobTypePolicy>;
 
 /** MVP Generalist body composition (reconcile M2) — all three Jobs require it. */
 const GENERALIST_BODY: BodyPartConstant[] = ["work", "carry", "move"];
+
+/**
+ * Harvester body composition placeholder (Story 6.2).
+ * WORK-heavy, used by the mine Job.
+ * Refined by Story 6.4 with final composition.
+ */
+const HARVESTER_BODY: BodyPartConstant[] = ["work", "work", "carry", "move"];
+
+/**
+ * Collector body composition (Story 6.4).
+ * CARRY/MOVE-heavy with exactly one WORK part, used in Specialist era
+ * for pulling from containers.
+ */
+const COLLECTOR_BODY: BodyPartConstant[] = ["work", "carry", "carry", "move"];
 
 export interface Config {
   /** Boot marker logged once on the first Tick of a deploy (Story 1.2, AC3). */
@@ -78,6 +90,14 @@ export interface Config {
   SPAWN_TTL_REPLACEMENT_THRESHOLD: number;
   /** Fixed priority order for spawn issuance reasons — read by selectSpawnReason (Story 5.4, FR-17). */
   SPAWN_PRIORITY_ORDER: readonly SpawnPriorityReason[];
+  /** Minimum RCL to reach Specialist era (Story 6.1). */
+  ERA_MIN_RCL: number;
+  /** Minimum number of built Extensions to reach Specialist era (Story 6.1). */
+  ERA_EXTENSIONS_REQUIRED: number;
+  /** Structure-type-keyed build-Job priority table — Container sites get a higher withinTierPriority than other structures (Story 6.3, AD-7, FR-24). Read by produceBuild. */
+  BUILD_STRUCTURE_PRIORITY: Partial<
+    Record<BuildableStructureConstant, number>
+  > & { default: number };
 }
 
 const constants: Config = {
@@ -110,6 +130,14 @@ const constants: Config = {
       lifetimeClass: "persistent",
       requirements: { body: GENERALIST_BODY, ttlFloor: 0 },
     },
+    mine: {
+      tier: "high",
+      withinTierPriority: 0,
+      maxWorkers: 1,
+      assignmentMode: "reserved",
+      lifetimeClass: "persistent",
+      requirements: { body: HARVESTER_BODY, ttlFloor: 0 },
+    },
   },
   MOVEMENT_STUCK_THRESHOLD: 3,
   MOVEMENT_DEFAULT_OPTS: {
@@ -124,6 +152,8 @@ const constants: Config = {
   SPAWN_TARGET_POPULATION: 10,
   BODY_COMPOSITIONS: {
     generalist: { parts: GENERALIST_BODY, cost: 200 },
+    harvester: { parts: HARVESTER_BODY, cost: 300 },
+    collector: { parts: COLLECTOR_BODY, cost: 250 },
   },
   SPAWN_TTL_REPLACEMENT_THRESHOLD: 200,
   SPAWN_PRIORITY_ORDER: [
@@ -131,6 +161,12 @@ const constants: Config = {
     "demand-pressure",
     "population-topup",
   ],
+  ERA_MIN_RCL: 2,
+  ERA_EXTENSIONS_REQUIRED: 5,
+  BUILD_STRUCTURE_PRIORITY: {
+    default: 0,
+    container: 10,
+  },
 };
 
 /**

@@ -51,7 +51,8 @@ export function loop(): void {
   // Contracts validate cleared this Tick must not still consume capacity when
   // match runs — the taken-set was derived before validate (AD-9).
   const cleared = measurePhase("validate", () => validate(takenSet));
-  measurePhase("match", () => match(releaseContracts(takenSet, cleared)));
-  measurePhase("spawn", spawn);
+  const released = releaseContracts(takenSet, cleared);
+  measurePhase("match", () => match(released));
+  measurePhase("spawn", () => spawn(released));
   measurePhase("execute", runBehaviors);
 }

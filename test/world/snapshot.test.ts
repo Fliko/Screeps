@@ -246,12 +246,411 @@ describe("buildWorldSnapshot", () => {
   });
 });
 
+describe("Era derivation (Story 6.1)", () => {
+  beforeEach(() => {
+    setGame();
+  });
+
+  it("is 'generalist' when RCL is below ERA_MIN_RCL", () => {
+    setGame(
+      createMockGame({
+        controller: {
+          id: "controller1" as Id<StructureController>,
+          pos: { x: 10, y: 20, roomName: "sim" },
+          level: 1,
+          progress: 0,
+          progressTotal: 200,
+        },
+        structures: [],
+        sources: [],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("generalist");
+  });
+
+  it("is 'generalist' when Extensions count is below ERA_EXTENSIONS_REQUIRED", () => {
+    setGame(
+      createMockGame({
+        controller: {
+          id: "controller1" as Id<StructureController>,
+          pos: { x: 10, y: 20, roomName: "sim" },
+          level: 2,
+          progress: 0,
+          progressTotal: 200,
+        },
+        structures: [
+          {
+            id: "ext1" as Id<StructureExtension>,
+            pos: { x: 6, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext2" as Id<StructureExtension>,
+            pos: { x: 7, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext3" as Id<StructureExtension>,
+            pos: { x: 8, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext4" as Id<StructureExtension>,
+            pos: { x: 9, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+        ],
+        sources: [
+          {
+            id: "source1" as Id<Source>,
+            pos: { x: 20, y: 20, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
+          },
+        ],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("generalist");
+  });
+
+  it("is 'generalist' when a Source lacks an adjacent Container", () => {
+    setGame(
+      createMockGame({
+        controller: {
+          id: "controller1" as Id<StructureController>,
+          pos: { x: 10, y: 20, roomName: "sim" },
+          level: 2,
+          progress: 0,
+          progressTotal: 200,
+        },
+        structures: [
+          {
+            id: "ext1" as Id<StructureExtension>,
+            pos: { x: 6, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext2" as Id<StructureExtension>,
+            pos: { x: 7, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext3" as Id<StructureExtension>,
+            pos: { x: 8, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext4" as Id<StructureExtension>,
+            pos: { x: 9, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext5" as Id<StructureExtension>,
+            pos: { x: 10, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "container1" as Id<StructureContainer>,
+            pos: { x: 20, y: 21, roomName: "sim" },
+            structureType: "container",
+            energy: 0,
+            energyCapacity: 2000,
+          },
+        ],
+        sources: [
+          {
+            id: "source1" as Id<Source>,
+            pos: { x: 20, y: 20, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
+          },
+          {
+            id: "source2" as Id<Source>,
+            pos: { x: 30, y: 30, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
+          },
+        ],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("generalist");
+  });
+
+  it("is 'specialist' when all conditions are met", () => {
+    setGame(
+      createMockGame({
+        controller: {
+          id: "controller1" as Id<StructureController>,
+          pos: { x: 10, y: 20, roomName: "sim" },
+          level: 2,
+          progress: 0,
+          progressTotal: 200,
+        },
+        structures: [
+          {
+            id: "ext1" as Id<StructureExtension>,
+            pos: { x: 6, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext2" as Id<StructureExtension>,
+            pos: { x: 7, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext3" as Id<StructureExtension>,
+            pos: { x: 8, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext4" as Id<StructureExtension>,
+            pos: { x: 9, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext5" as Id<StructureExtension>,
+            pos: { x: 10, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "container1" as Id<StructureContainer>,
+            pos: { x: 20, y: 21, roomName: "sim" },
+            structureType: "container",
+            energy: 0,
+            energyCapacity: 2000,
+          },
+          {
+            id: "container2" as Id<StructureContainer>,
+            pos: { x: 30, y: 31, roomName: "sim" },
+            structureType: "container",
+            energy: 0,
+            energyCapacity: 2000,
+          },
+        ],
+        sources: [
+          {
+            id: "source1" as Id<Source>,
+            pos: { x: 20, y: 20, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
+          },
+          {
+            id: "source2" as Id<Source>,
+            pos: { x: 30, y: 30, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
+          },
+        ],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("specialist");
+  });
+
+  it("is 'generalist' when controller is undefined", () => {
+    setGame(
+      createMockGame({
+        controller: undefined,
+        structures: [
+          {
+            id: "ext1" as Id<StructureExtension>,
+            pos: { x: 6, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+        ],
+        sources: [],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("generalist");
+  });
+
+  it("is 'generalist' when a Container is not adjacent (distance > 1)", () => {
+    setGame(
+      createMockGame({
+        controller: {
+          id: "controller1" as Id<StructureController>,
+          pos: { x: 10, y: 20, roomName: "sim" },
+          level: 2,
+          progress: 0,
+          progressTotal: 200,
+        },
+        structures: [
+          {
+            id: "ext1" as Id<StructureExtension>,
+            pos: { x: 6, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext2" as Id<StructureExtension>,
+            pos: { x: 7, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext3" as Id<StructureExtension>,
+            pos: { x: 8, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext4" as Id<StructureExtension>,
+            pos: { x: 9, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext5" as Id<StructureExtension>,
+            pos: { x: 10, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "container1" as Id<StructureContainer>,
+            pos: { x: 20, y: 22, roomName: "sim" },
+            structureType: "container",
+            energy: 0,
+            energyCapacity: 2000,
+          },
+        ],
+        sources: [
+          {
+            id: "source1" as Id<Source>,
+            pos: { x: 20, y: 20, roomName: "sim" },
+            energy: 1500,
+            energyCapacity: 3000,
+          },
+        ],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("generalist");
+  });
+
+  it("is 'specialist' when there are no Sources and all other conditions are met", () => {
+    setGame(
+      createMockGame({
+        controller: {
+          id: "controller1" as Id<StructureController>,
+          pos: { x: 10, y: 20, roomName: "sim" },
+          level: 2,
+          progress: 0,
+          progressTotal: 200,
+        },
+        structures: [
+          {
+            id: "ext1" as Id<StructureExtension>,
+            pos: { x: 6, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext2" as Id<StructureExtension>,
+            pos: { x: 7, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext3" as Id<StructureExtension>,
+            pos: { x: 8, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext4" as Id<StructureExtension>,
+            pos: { x: 9, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+          {
+            id: "ext5" as Id<StructureExtension>,
+            pos: { x: 10, y: 5, roomName: "sim" },
+            structureType: "extension",
+            energy: 50,
+            energyCapacity: 50,
+          },
+        ],
+        sources: [],
+      }),
+    );
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("specialist");
+  });
+
+  it("defaults to 'generalist' in the empty/defensive snapshot", () => {
+    // Empty rooms should always have generalist era
+    setGame(createMockGame());
+
+    const snapshot = buildWorldSnapshot();
+
+    expect(snapshot.era).toBe("generalist");
+  });
+});
+
 describe("WorldSnapshot as plain data", () => {
   it("accepts a literal plain-data snapshot with no Game mocks", () => {
     const snapshot: WorldSnapshot = {
       roomName: "sim",
       tick: 0,
       energyAvailable: 250,
+      era: "generalist",
       controller: {
         id: "controller1",
         pos: { x: 10, y: 20, roomName: "sim" },

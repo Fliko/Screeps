@@ -20,6 +20,9 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
       "SPAWN_TTL_REPLACEMENT_THRESHOLD",
     ),
     SPAWN_PRIORITY_ORDER: getConstant("SPAWN_PRIORITY_ORDER"),
+    ERA_MIN_RCL: getConstant("ERA_MIN_RCL"),
+    ERA_EXTENSIONS_REQUIRED: getConstant("ERA_EXTENSIONS_REQUIRED"),
+    BUILD_STRUCTURE_PRIORITY: getConstant("BUILD_STRUCTURE_PRIORITY"),
     ...overrides,
   };
 }
@@ -47,6 +50,9 @@ describe("validateMovementConfig", () => {
           "SPAWN_TTL_REPLACEMENT_THRESHOLD",
         ),
         SPAWN_PRIORITY_ORDER: getConstant("SPAWN_PRIORITY_ORDER"),
+        ERA_MIN_RCL: getConstant("ERA_MIN_RCL"),
+        ERA_EXTENSIONS_REQUIRED: getConstant("ERA_EXTENSIONS_REQUIRED"),
+        BUILD_STRUCTURE_PRIORITY: getConstant("BUILD_STRUCTURE_PRIORITY"),
       }),
     ).not.toThrow();
   });

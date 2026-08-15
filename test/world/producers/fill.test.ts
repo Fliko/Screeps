@@ -26,6 +26,7 @@ function snapshot(structures: SnapshotStructure[] = []): WorldSnapshot {
     roomName: "sim",
     tick: 0,
     energyAvailable: 0,
+    era: "generalist",
     structures,
     constructionSites: [],
     sources: [],

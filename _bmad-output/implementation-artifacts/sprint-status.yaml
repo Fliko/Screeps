@@ -92,11 +92,11 @@ development_status:
   epic-5-retrospective: optional
 
   # Epic 6: Evolution — Graduation to Specialists (MVP exit)
-  epic-6: backlog
-  6-1-era-derivation-in-the-snapshot: backlog
-  6-2-mine-producer-era-gating: backlog
-  6-3-container-first-construction: backlog
-  6-4-reserved-slot-spawning-specialist-bodies: backlog
+  epic-6: in-progress
+  6-1-era-derivation-in-the-snapshot: done
+  6-2-mine-producer-era-gating: done
+  6-3-container-first-construction: done
+  6-4-reserved-slot-spawning-specialist-bodies: done
   6-5-harvester-behavior: backlog
   6-6-collector-behavior: backlog
   6-7-deprecation-graceful-degradation: backlog

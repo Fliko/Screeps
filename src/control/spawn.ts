@@ -1,14 +1,26 @@
 /**
- * AD-9: spawn phase — top up population toward SPAWN_TARGET_POPULATION.
+ * AD-9: spawn phase — issues at most one spawnCreep per Tick, selecting a
+ * reason via the fixed priority order (Story 5.4): a vacant Reserved mine
+ * slot ("reserved-vacancy", Story 6.4) beats Specialist-era delivery demand
+ * ("demand-pressure", Story 6.4), which beats population/TTL top-up
+ * ("population-topup", Story 5.1/5.2). Each reason spawns its own body kind
+ * (harvester / collector / generalist); only "reserved-vacancy" writes a
+ * Contract into the new Creep's initial memory (AD-2), bypassing Matching.
  *
- * Reads only the WorldSnapshot (AD-1/AD-10) — never the Game global directly.
- * Population = snapshot.creeps.length (Spawning Creeps already appear there,
- * per world/snapshot.ts#mapCreep, so they count without extra bookkeeping).
+ * Reads only the WorldSnapshot and Board (AD-1/AD-10) — never the Game global
+ * directly. Population = snapshot.creeps.length (Spawning Creeps already
+ * appear there, per world/snapshot.ts#mapCreep, so they count without extra
+ * bookkeeping).
  */
+
+import { getBoard } from "../board/registry";
 import type { SpawnPriorityReason } from "../config";
 import { getConstant } from "../config";
+import { setContract } from "../state/contract";
 import { resolveObject } from "../world/objects";
 import { getCurrentSnapshot } from "../world/snapshot";
+import { hasDemandPressure, hasReservedVacancy } from "./evolution";
+import { hasCapacity, type TakenSet } from "./taken";
 
 /**
  * Selects a spawn reason from a list of present reasons using the fixed
@@ -29,12 +41,12 @@ export function selectSpawnReason(
   return undefined;
 }
 
-export function spawn(): void {
+export function spawn(takenSet: TakenSet): void {
   const snapshot = getCurrentSnapshot();
   if (!snapshot) return;
 
-  const { parts, cost } = getConstant("BODY_COMPOSITIONS").generalist;
-  if (snapshot.energyAvailable < cost) return;
+  const board = getBoard();
+  if (!board) return;
 
   const target = getConstant("SPAWN_TARGET_POPULATION");
   const population = snapshot.creeps.length;
@@ -56,10 +68,19 @@ export function spawn(): void {
   );
   const effectiveTarget = hasNearDyingCreep ? target + 1 : target;
 
-  // Build present reasons from existing population/TTL-replacement computation
-  // (Story 5.4: Epic 5 never adds "reserved-vacancy"/"demand-pressure" here,
-  // that's Epic 6's job on this same function).
+  // Build present reasons: Epic 6's reserved-vacancy and demand-pressure
+  // (Story 6.4) plus existing population/TTL-replacement computation
+  // (Story 5.4). Pass to selectSpawnReason which picks by fixed priority order.
   const present: SpawnPriorityReason[] = [];
+
+  if (hasReservedVacancy(board.jobs, takenSet)) {
+    present.push("reserved-vacancy");
+  }
+
+  if (hasDemandPressure(board.jobs, takenSet, snapshot.era)) {
+    present.push("demand-pressure");
+  }
+
   if (population < effectiveTarget) {
     present.push("population-topup");
   }
@@ -79,20 +100,46 @@ export function spawn(): void {
   const liveSpawn = resolveObject<StructureSpawn>(idleSpawn.id);
   if (!liveSpawn) return;
 
-  const name = `generalist-${snapshot.roomName}-${snapshot.tick}`;
-  // Population top-up spawns get no Contract in initial memory — unlike
-  // Epic 6's Reserved-slot spawning, this is not a case where AD-2
-  // write-ownership requires a Contract written at spawnCreep time. The new
-  // Creep is simply picked up by `match` next Tick like any other idle Creep.
-  const result = liveSpawn.spawnCreep(parts, name, { memory: {} });
+  // Branch logic per selected reason: pick body kind, name pattern, and memory setup
+  let bodyKind: "generalist" | "harvester" | "collector";
+  let name: string;
+  let namePrefix: string;
+  let memorySetup: { memory: { contract?: string } };
+  const reasons: string[] = [];
 
-  if (result === OK) {
-    // A spawn can fire for either reason simultaneously (e.g. population
-    // already below target while a Creep also happens to be near-dying) —
-    // report both rather than collapsing to whichever check ran first.
-    const reasons: string[] = [];
+  if (selectedReason === "reserved-vacancy") {
+    bodyKind = "harvester";
+    namePrefix = "harvester";
+    // Find the vacant mine Job and write its Contract to initial memory
+    const vacantMineJob = board.jobs.find(
+      (job) => job.type === "mine" && hasCapacity(takenSet, job),
+    );
+    if (!vacantMineJob) return; // Safety check (should not happen if hasReservedVacancy is true)
+    memorySetup = { memory: {} };
+    setContract(memorySetup, { jobId: vacantMineJob.id });
+    reasons.push("reserved-vacancy");
+  } else if (selectedReason === "demand-pressure") {
+    bodyKind = "collector";
+    namePrefix = "collector";
+    memorySetup = { memory: {} };
+    reasons.push("demand-pressure");
+  } else {
+    // "population-topup"
+    bodyKind = "generalist";
+    namePrefix = "generalist";
+    memorySetup = { memory: {} };
     if (population < target) reasons.push("population");
     if (hasNearDyingCreep) reasons.push("ttl-replacement");
+  }
+
+  // Affordability check per body kind (Story 5.3 pattern)
+  const { parts, cost } = getConstant("BODY_COMPOSITIONS")[bodyKind];
+  if (snapshot.energyAvailable < cost) return;
+
+  name = `${namePrefix}-${snapshot.roomName}-${snapshot.tick}`;
+  const result = liveSpawn.spawnCreep(parts, name, memorySetup);
+
+  if (result === OK) {
     console.log(
       `[spawn] spawnCreep(${name}) issued (${reasons.join("+")}), population ${population}/${effectiveTarget}`,
     );

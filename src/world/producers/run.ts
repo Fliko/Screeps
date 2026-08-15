@@ -12,6 +12,7 @@ import { addJob, getBoard } from "../../board/registry";
 import { getCurrentSnapshot } from "../snapshot";
 import { produceBuild } from "./build";
 import { produceFill } from "./fill";
+import { produceMine } from "./mine";
 import { produceUpgrade } from "./upgrade";
 
 export function runProducers(): void {
@@ -29,6 +30,7 @@ export function runProducers(): void {
     ...produceFill(snapshot),
     ...produceBuild(snapshot),
     ...produceUpgrade(snapshot),
+    ...produceMine(snapshot),
   ];
   for (const job of produced) addJob(job);
 }

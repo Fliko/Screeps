@@ -203,6 +203,26 @@ describe("selectJob — pure scoring", () => {
     expect(selectJob(creep, [first, second], new Map())).toBe(first);
     expect(selectJob(creep, [second, first], new Map())).toBe(second);
   });
+
+  it("picks a higher-priority Container build Job over a nearer, lower-priority extension build Job", () => {
+    const creep = snapshotCreep("c1", 1500, 0, 0);
+    const containerJob = makeTestJob("build", "container1", {
+      tier: "medium",
+      withinTierPriority: 10,
+      x: 40,
+      y: 40,
+    });
+    const extensionJob = makeTestJob("build", "ext1", {
+      tier: "medium",
+      withinTierPriority: 0,
+      x: 1,
+      y: 1,
+    });
+
+    expect(selectJob(creep, [containerJob, extensionJob], new Map())).toBe(
+      containerJob,
+    );
+  });
 });
 
 describe("match — I/O matrix", () => {

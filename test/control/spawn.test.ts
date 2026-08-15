@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { Job } from "../../src/board/job";
+import { makeJobId } from "../../src/board/job";
+import * as boardModule from "../../src/board/registry";
 import { getConstant, setConstant } from "../../src/config";
 import { selectSpawnReason, spawn } from "../../src/control/spawn";
+import { deriveTakenSet } from "../../src/control/taken";
 import type { CreepStub, GameAdapter, StructureStub } from "../../src/game";
 import { setGame } from "../../src/game";
 import * as snapshotModule from "../../src/world/snapshot";
@@ -43,6 +47,45 @@ function createSpawnStub(id: string, spawning = false): StructureStub {
   };
 }
 
+function createMineJob(targetId: string): Job {
+  return {
+    id: makeJobId("mine", targetId),
+    type: "mine",
+    targetId,
+    pos: { x: 0, y: 0, roomName: "sim" },
+    tier: "high",
+    withinTierPriority: 0,
+    maxWorkers: 1,
+    assignmentMode: "reserved",
+    lifetimeClass: "persistent",
+    requirements: {
+      body: getConstant("BODY_COMPOSITIONS").harvester.parts,
+      ttlFloor: 0,
+    },
+  };
+}
+
+function createPulledJob(
+  type: "fill" | "build" | "upgrade",
+  targetId: string,
+): Job {
+  return {
+    id: makeJobId(type, targetId),
+    type,
+    targetId,
+    pos: { x: 0, y: 0, roomName: "sim" },
+    tier: "critical",
+    withinTierPriority: 0,
+    maxWorkers: type === "fill" ? 6 : 1,
+    assignmentMode: "pulled",
+    lifetimeClass: "transient",
+    requirements: {
+      body: getConstant("BODY_COMPOSITIONS").generalist.parts,
+      ttlFloor: 200,
+    },
+  };
+}
+
 function createMockGame(
   creeps: CreepStub[],
   structures: StructureStub[],
@@ -80,12 +123,17 @@ function createMockGame(
 beforeEach(() => {
   vi.spyOn(console, "log").mockImplementation(() => {});
   setConstant("SPAWN_TARGET_POPULATION", 4);
+  // Mock getBoard to return a board with empty jobs array by default
+  vi.spyOn(boardModule, "getBoard").mockReturnValue({
+    jobs: [],
+  });
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
   setGame();
   setConstant("SPAWN_TARGET_POPULATION", 4);
+  vi.clearAllMocks();
 });
 
 describe("selectSpawnReason — I/O Matrix", () => {
@@ -132,7 +180,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
     expect(spawnCreepImpl).toHaveBeenCalledWith(
@@ -157,7 +205,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -175,7 +223,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -192,7 +240,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -204,7 +252,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
     expect(vi.mocked(console.log)).not.toHaveBeenCalled();
@@ -215,7 +263,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame([], [createSpawnStub("spawn1")], spawnCreepImpl));
     vi.spyOn(snapshotModule, "getCurrentSnapshot").mockReturnValue(undefined);
 
-    expect(() => spawn()).not.toThrow();
+    expect(() => spawn(deriveTakenSet([]))).not.toThrow();
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
 
@@ -225,7 +273,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [], spawnCreepImpl));
 
     buildWorldSnapshot();
-    expect(() => spawn()).not.toThrow();
+    expect(() => spawn(deriveTakenSet([]))).not.toThrow();
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
 
@@ -240,7 +288,7 @@ describe("spawn — I/O matrix", () => {
     });
 
     buildWorldSnapshot();
-    expect(() => spawn()).not.toThrow();
+    expect(() => spawn(deriveTakenSet([]))).not.toThrow();
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
 
@@ -256,7 +304,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
     expect(vi.mocked(console.log)).toHaveBeenCalledWith(
@@ -287,7 +335,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -304,7 +352,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -321,7 +369,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -338,7 +386,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
   });
@@ -357,7 +405,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub1], spawnCreepImpl, 100));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
 
@@ -375,7 +423,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creepsAfter, [spawnStub2], spawnCreepImpl, 101));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
   });
@@ -392,7 +440,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -409,7 +457,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
   });
@@ -421,7 +469,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
     expect(vi.mocked(console.log)).toHaveBeenCalledWith(
@@ -436,7 +484,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(vi.mocked(console.log)).toHaveBeenCalledWith(
       expect.stringContaining("(population)"),
@@ -451,7 +499,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100, cost - 1));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
   });
@@ -464,7 +512,7 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100, cost));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
   });
@@ -482,8 +530,264 @@ describe("spawn — I/O matrix", () => {
     setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100, cost - 1));
 
     buildWorldSnapshot();
-    spawn();
+    spawn(deriveTakenSet([]));
 
     expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  // Story 6.4: Specialist-era spawning tests
+
+  it("spawns a Harvester with Contract for vacant mine (reserved-vacancy)", () => {
+    const creeps: CreepStub[] = [];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(
+      createMockGame(
+        creeps,
+        [spawnStub],
+        spawnCreepImpl,
+        100,
+        getConstant("BODY_COMPOSITIONS").harvester.cost,
+      ),
+    );
+
+    // Mock getBoard to return a board with a vacant mine Job
+    const mineJob = createMineJob("S1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [mineJob],
+    });
+
+    buildWorldSnapshot();
+    spawn(deriveTakenSet([]));
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(spawnCreepImpl).toHaveBeenCalledWith(
+      getConstant("BODY_COMPOSITIONS").harvester.parts,
+      "harvester-sim-100",
+      expect.objectContaining({
+        memory: expect.objectContaining({ contract: "mine:S1" }),
+      }),
+    );
+  });
+
+  it("does not spawn Harvester when mine slot is filled (reserved-vacancy absent)", () => {
+    const creeps: CreepStub[] = [];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(
+      createMockGame(
+        creeps,
+        [spawnStub],
+        spawnCreepImpl,
+        100,
+        getConstant("BODY_COMPOSITIONS").harvester.cost,
+      ),
+    );
+
+    // Mock getBoard with a filled mine Job
+    const mineJob = createMineJob("S1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [mineJob],
+    });
+
+    buildWorldSnapshot();
+    // Pass a takenSet where the mine is already taken
+    spawn(deriveTakenSet([{ jobId: mineJob.id }]));
+
+    // With the mine slot filled, reserved-vacancy is absent; 0 creeps < the
+    // target of 4 means population-topup fires instead, spawning a Generalist.
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(spawnCreepImpl).toHaveBeenCalledWith(
+      getConstant("BODY_COMPOSITIONS").generalist.parts,
+      expect.stringContaining("generalist"),
+      { memory: {} },
+    );
+  });
+
+  it("spawns a Collector when demand pressure exists (no reserved vacancy)", () => {
+    const creeps: CreepStub[] = [];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(
+      createMockGame(
+        creeps,
+        [spawnStub],
+        spawnCreepImpl,
+        100,
+        getConstant("BODY_COMPOSITIONS").collector.cost,
+      ),
+    );
+
+    // Mock getBoard with only pulled Jobs (no vacant mine)
+    const fillJob = createPulledJob("fill", "s1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [fillJob],
+    });
+
+    // Manually set era to specialist in the snapshot
+    vi.spyOn(snapshotModule, "getCurrentSnapshot").mockReturnValue({
+      roomName: "sim",
+      tick: 100,
+      energyAvailable: getConstant("BODY_COMPOSITIONS").collector.cost,
+      era: "specialist",
+      structures: [createSpawnStub("spawn1")],
+      constructionSites: [],
+      sources: [],
+      creeps: [],
+    });
+
+    spawn(deriveTakenSet([]));
+
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(spawnCreepImpl).toHaveBeenCalledWith(
+      getConstant("BODY_COMPOSITIONS").collector.parts,
+      "collector-sim-100",
+      { memory: {} },
+    );
+  });
+
+  it("spawns Generalist when era is generalist (no demand-pressure)", () => {
+    const creeps = [createCreep("c1"), createCreep("c2")];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(createMockGame(creeps, [spawnStub], spawnCreepImpl, 100));
+
+    // Mock getBoard with only pulled Jobs
+    const fillJob = createPulledJob("fill", "s1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [fillJob],
+    });
+
+    buildWorldSnapshot();
+    spawn(deriveTakenSet([]));
+
+    // Should spawn generalist due to population-topup (era is generalist by default)
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(spawnCreepImpl).toHaveBeenCalledWith(
+      getConstant("BODY_COMPOSITIONS").generalist.parts,
+      "generalist-sim-100",
+      { memory: {} },
+    );
+  });
+
+  it("does not spawn Harvester when energy is insufficient (reserved-vacancy present)", () => {
+    const creeps: CreepStub[] = [];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    const harvesterCost = getConstant("BODY_COMPOSITIONS").harvester.cost;
+    setGame(
+      createMockGame(
+        creeps,
+        [spawnStub],
+        spawnCreepImpl,
+        100,
+        harvesterCost - 1,
+      ),
+    );
+
+    // Mock getBoard with a vacant mine Job
+    const mineJob = createMineJob("S1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [mineJob],
+    });
+
+    buildWorldSnapshot();
+    spawn(deriveTakenSet([]));
+
+    // Should not spawn due to insufficient energy for harvester
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("does not spawn Collector when energy is insufficient (demand-pressure present)", () => {
+    const creeps: CreepStub[] = [];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    const collectorCost = getConstant("BODY_COMPOSITIONS").collector.cost;
+    setGame(
+      createMockGame(
+        creeps,
+        [spawnStub],
+        spawnCreepImpl,
+        100,
+        collectorCost - 1,
+      ),
+    );
+
+    // Mock getBoard with only pulled Jobs
+    const fillJob = createPulledJob("fill", "s1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [fillJob],
+    });
+
+    // Manually set era to specialist
+    vi.spyOn(snapshotModule, "getCurrentSnapshot").mockReturnValue({
+      roomName: "sim",
+      tick: 100,
+      energyAvailable: collectorCost - 1,
+      era: "specialist",
+      structures: [createSpawnStub("spawn1")],
+      constructionSites: [],
+      sources: [],
+      creeps: [],
+    });
+
+    spawn(deriveTakenSet([]));
+
+    // Should not spawn due to insufficient energy for collector
+    expect(spawnCreepImpl).not.toHaveBeenCalled();
+  });
+
+  it("selects reserved-vacancy when all three reasons are present", () => {
+    const creeps = [createCreep("c1"), createCreep("c2")];
+    const spawnStub = createSpawnStub("spawn1");
+    const spawnCreepImpl = vi.fn(() => OK);
+    setGame(
+      createMockGame(
+        creeps,
+        [spawnStub],
+        spawnCreepImpl,
+        100,
+        getConstant("BODY_COMPOSITIONS").harvester.cost,
+      ),
+    );
+
+    // Mock getBoard with both mine and pulled Jobs
+    const mineJob = createMineJob("S1");
+    const fillJob = createPulledJob("fill", "s1");
+    vi.spyOn(boardModule, "getBoard").mockReturnValue({
+      jobs: [mineJob, fillJob],
+    });
+
+    // Manually set era to specialist
+    vi.spyOn(snapshotModule, "getCurrentSnapshot").mockReturnValue({
+      roomName: "sim",
+      tick: 100,
+      energyAvailable: getConstant("BODY_COMPOSITIONS").harvester.cost,
+      era: "specialist",
+      structures: [createSpawnStub("spawn1")],
+      constructionSites: [],
+      sources: [],
+      creeps: creeps.map((c) => ({
+        id: c.id,
+        pos: c.pos,
+        body: c.body,
+        ttl: c.ttl,
+        carry: c.carry,
+        carryCapacity: c.carryCapacity,
+        spawning: c.spawning,
+      })),
+    });
+
+    spawn(deriveTakenSet([]));
+
+    // Should spawn Harvester (reserved-vacancy has highest priority)
+    expect(spawnCreepImpl).toHaveBeenCalledTimes(1);
+    expect(spawnCreepImpl).toHaveBeenCalledWith(
+      getConstant("BODY_COMPOSITIONS").harvester.parts,
+      "harvester-sim-100",
+      expect.objectContaining({
+        memory: expect.objectContaining({ contract: "mine:S1" }),
+      }),
+    );
   });
 });

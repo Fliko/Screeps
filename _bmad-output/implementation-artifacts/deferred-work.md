@@ -9,6 +9,12 @@
 - NaN from getUsed() [src/control/metering.ts:8,11] — if getUsed() returns NaN, delta.toFixed(2) = "NaN". Deferred: edge case.
 
 
+## Deferred from: code review of stories 6.1-6.4 (2026-08-14)
+
+- source_spec: `_bmad-output/implementation-artifacts/spec-6-4-reserved-slot-spawning-specialist-bodies.md`
+  summary: `spawn()` has no fallback to a lower-priority present reason (e.g. population-topup) when the selected reason's body is unaffordable — it returns without spawning that Tick even if a cheaper reason could have fired.
+  evidence: Spec's own I/O Matrix and AC explicitly specify "no spawnCreep call" on insufficient energy for the selected reason, with no fallback behavior defined; self-healing next Tick (population-topup re-evaluates), not a functional regression, but worth deliberate design attention alongside Story 6.7's spawn-policy transition logic.
+
 ## Deferred from: code review of story 2.1 (2026-08-12)
 
 - Snapshot only captures one visible room [src/world/snapshot.ts:69-70] — MVP single-room scope; multi-room support deferred per architecture.

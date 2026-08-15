@@ -7,6 +7,7 @@ import { runProducers } from "../../../src/world/producers/run";
 import { buildWorldSnapshot } from "../../../src/world/snapshot";
 
 const generalistBody = ["work", "carry", "move"] as BodyPartConstant[];
+const harvesterBody = ["work", "work", "carry", "move"] as BodyPartConstant[];
 
 const BASE: JobPolicyTable = {
   fill: {
@@ -32,6 +33,14 @@ const BASE: JobPolicyTable = {
     assignmentMode: "pulled",
     lifetimeClass: "persistent",
     requirements: { body: generalistBody, ttlFloor: 0 },
+  },
+  mine: {
+    tier: "high",
+    withinTierPriority: 0,
+    maxWorkers: 1,
+    assignmentMode: "reserved",
+    lifetimeClass: "persistent",
+    requirements: { body: harvesterBody, ttlFloor: 0 },
   },
 };
 
