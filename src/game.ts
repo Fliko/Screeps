@@ -122,7 +122,9 @@ const defaultGame: GameAdapter = {
   findMyStructures: (roomName: string): StructureStub[] => {
     const room = Game.rooms[roomName];
     if (!room) return [];
-    return room
+
+    // Fetch owned structures (Spawn, Extension, etc.) via FIND_MY_STRUCTURES
+    const ownedStructures = room
       .find(FIND_MY_STRUCTURES)
       .filter(isEnergyStructure)
       .map((structure) => ({
@@ -135,6 +137,20 @@ const defaultGame: GameAdapter = {
           ? { spawning: (structure as StructureSpawn).spawning != null }
           : {}),
       }));
+
+    // Fetch Containers via FIND_STRUCTURES (they are neutral/unowned in Screeps)
+    const containers = room
+      .find(FIND_STRUCTURES)
+      .filter((s) => s.structureType === STRUCTURE_CONTAINER)
+      .map((structure) => ({
+        id: structure.id,
+        pos: toPos(structure.pos),
+        structureType: structure.structureType,
+        energy: (structure as StructureContainer).store?.energy ?? 0,
+        energyCapacity: (structure as StructureContainer).storeCapacity ?? 0,
+      }));
+
+    return [...ownedStructures, ...containers];
   },
   findConstructionSites: (roomName: string): ConstructionSiteStub[] => {
     const room = Game.rooms[roomName];

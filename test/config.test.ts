@@ -23,6 +23,9 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
     ERA_MIN_RCL: getConstant("ERA_MIN_RCL"),
     ERA_EXTENSIONS_REQUIRED: getConstant("ERA_EXTENSIONS_REQUIRED"),
     BUILD_STRUCTURE_PRIORITY: getConstant("BUILD_STRUCTURE_PRIORITY"),
+    COLLECTOR_MIN_CONTAINER_ENERGY: getConstant(
+      "COLLECTOR_MIN_CONTAINER_ENERGY",
+    ),
     ...overrides,
   };
 }
@@ -53,6 +56,9 @@ describe("validateMovementConfig", () => {
         ERA_MIN_RCL: getConstant("ERA_MIN_RCL"),
         ERA_EXTENSIONS_REQUIRED: getConstant("ERA_EXTENSIONS_REQUIRED"),
         BUILD_STRUCTURE_PRIORITY: getConstant("BUILD_STRUCTURE_PRIORITY"),
+        COLLECTOR_MIN_CONTAINER_ENERGY: getConstant(
+          "COLLECTOR_MIN_CONTAINER_ENERGY",
+        ),
       }),
     ).not.toThrow();
   });

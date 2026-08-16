@@ -13,16 +13,20 @@ import type { JobType } from "../../board/job";
 import { parseJobId } from "../../board/job";
 import { getConstant } from "../../config";
 import { getCurrentSnapshot } from "../../world/snapshot";
+import { deriveSourceStrategy, deriveSourcingPhase } from "../sourcing";
 import { runBuild } from "./build";
 import { runDyingUnload } from "./dying";
 import { runFill } from "./fill";
+import { runHarvest } from "./harvest";
 import { runUpgrade } from "./upgrade";
+import { runWithdrawSource } from "./withdraw";
 
 type Behavior = (creepId: string, jobId: string) => void;
 
 const BEHAVIORS: Partial<Record<JobType, Behavior>> = {
   fill: runFill,
   build: runBuild,
+  mine: runHarvest,
   upgrade: runUpgrade,
 };
 
@@ -53,6 +57,23 @@ export function runBehaviors(): void {
 
     const jobId = creep.contract;
     if (jobId === undefined) continue;
+
+    // WITHDRAW interceptor (Story 6.6): a Collector (body-derived strategy
+    // "withdraw") whose carry is empty (phase "source") withdraws from a
+    // Container instead of running its normal Job behavior this Tick.
+    if (
+      deriveSourceStrategy(creep.body) === "withdraw" &&
+      deriveSourcingPhase(creep.carry) === "source"
+    ) {
+      try {
+        runWithdrawSource(creep.id);
+      } catch (err) {
+        console.log(
+          `[behavior:run] runWithdrawSource threw for Creep ${creep.id}: ${String(err)}`,
+        );
+      }
+      continue;
+    }
 
     // Contracts in the snapshot are already grammar-validated by getContract at
     // snapshot-build time, so parseJobId cannot throw here.

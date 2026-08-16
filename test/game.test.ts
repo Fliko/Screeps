@@ -21,8 +21,20 @@ const FIND_MY_STRUCTURES_CODE = 108;
   FIND_MY_STRUCTURES_CODE;
 (globalThis as unknown as Record<string, unknown>).STRUCTURE_SPAWN = "spawn";
 
+// FIND_STRUCTURES and STRUCTURE_CONTAINER are likewise ambient globals — stubbed
+// for testing Container merging in findMyStructures (Story 6.5).
+const FIND_STRUCTURES_CODE = 111;
+(globalThis as unknown as Record<string, unknown>).FIND_STRUCTURES =
+  FIND_STRUCTURES_CODE;
+(globalThis as unknown as Record<string, unknown>).STRUCTURE_CONTAINER =
+  "container";
+
+interface MockRoom {
+  find: (type: unknown) => unknown[];
+}
+
 function stubGameGlobal(
-  rooms: Record<string, { find: (type: unknown) => unknown[] }>,
+  rooms: Record<string, MockRoom>,
   extra: Record<string, unknown> = {},
 ): void {
   (globalThis as { Game: unknown }).Game = { rooms, ...extra };
@@ -119,6 +131,90 @@ describe("defaultGame.findMyStructures — spawning field", () => {
         spawning: false,
       },
     ]);
+  });
+
+  it("merges Containers from FIND_STRUCTURES into owned structures (Story 6.5)", () => {
+    const spawn = {
+      id: "spawn1",
+      pos: { x: 5, y: 5, roomName: "sim" },
+      structureType: "spawn",
+      energy: 200,
+      energyCapacity: 300,
+      spawning: null,
+    };
+    const container = {
+      id: "container1",
+      pos: { x: 25, y: 25, roomName: "sim" },
+      structureType: "container",
+      store: { energy: 1000 },
+      storeCapacity: 2000,
+    };
+    stubGameGlobal({
+      sim: {
+        find: (type: unknown) => {
+          if (type === FIND_MY_STRUCTURES_CODE) return [spawn];
+          if (type === FIND_STRUCTURES_CODE) return [container];
+          return [];
+        },
+      },
+    });
+
+    expect(getGame().findMyStructures("sim")).toEqual([
+      {
+        id: "spawn1",
+        pos: { x: 5, y: 5, roomName: "sim" },
+        structureType: "spawn",
+        energy: 200,
+        energyCapacity: 300,
+        spawning: false,
+      },
+      {
+        id: "container1",
+        pos: { x: 25, y: 25, roomName: "sim" },
+        structureType: "container",
+        energy: 1000,
+        energyCapacity: 2000,
+      },
+    ]);
+  });
+
+  it("filters FIND_STRUCTURES to only include Containers", () => {
+    const spawn = {
+      id: "spawn1",
+      pos: { x: 5, y: 5, roomName: "sim" },
+      structureType: "spawn",
+      energy: 200,
+      energyCapacity: 300,
+      spawning: null,
+    };
+    const container = {
+      id: "container1",
+      pos: { x: 25, y: 25, roomName: "sim" },
+      structureType: "container",
+      store: { energy: 1000 },
+      storeCapacity: 2000,
+    };
+    const road = {
+      id: "road1",
+      pos: { x: 10, y: 10, roomName: "sim" },
+      structureType: "road",
+      hits: 5000,
+      hitsMax: 5000,
+    };
+    stubGameGlobal({
+      sim: {
+        find: (type: unknown) => {
+          if (type === FIND_MY_STRUCTURES_CODE) return [spawn];
+          if (type === FIND_STRUCTURES_CODE) return [container, road];
+          return [];
+        },
+      },
+    });
+
+    const structures = getGame().findMyStructures("sim");
+    expect(structures).toHaveLength(2);
+    expect(structures.some((s) => s.structureType === "container")).toBe(true);
+    expect(structures.some((s) => s.structureType === "road")).toBe(false);
   });
 });
 

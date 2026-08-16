@@ -22,9 +22,20 @@ vi.mock("../../../src/agents/behaviors/upgrade", () => ({
     runUpgradeMock(creepId, jobId),
 }));
 
+const runHarvestMock = vi.fn();
+vi.mock("../../../src/agents/behaviors/harvest", () => ({
+  runHarvest: (creepId: string, jobId: string) =>
+    runHarvestMock(creepId, jobId),
+}));
+
 const runDyingUnloadMock = vi.fn();
 vi.mock("../../../src/agents/behaviors/dying", () => ({
   runDyingUnload: (creepId: string) => runDyingUnloadMock(creepId),
+}));
+
+const runWithdrawSourceMock = vi.fn();
+vi.mock("../../../src/agents/behaviors/withdraw", () => ({
+  runWithdrawSource: (creepId: string) => runWithdrawSourceMock(creepId),
 }));
 
 const { runBehaviors } = await import("../../../src/agents/behaviors/run");
@@ -68,7 +79,9 @@ afterEach(() => {
   runFillMock.mockClear();
   runBuildMock.mockClear();
   runUpgradeMock.mockClear();
+  runHarvestMock.mockClear();
   runDyingUnloadMock.mockClear();
+  runWithdrawSourceMock.mockClear();
   setGame();
 });
 
@@ -113,15 +126,14 @@ describe("runBehaviors — dispatch", () => {
     expect(runUpgradeMock).toHaveBeenCalledWith("c1", "upgrade:controller1");
   });
 
-  it("is a no-op for a Contract whose Job type has no dispatch entry (mine)", () => {
+  it("calls runHarvest for a Creep holding a mine Contract (Story 6.5)", () => {
     const creep = createCreep("c1", "mine:source1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
-    expect(() => runBehaviors()).not.toThrow();
-    expect(runFillMock).not.toHaveBeenCalled();
-    expect(runBuildMock).not.toHaveBeenCalled();
-    expect(runUpgradeMock).not.toHaveBeenCalled();
+    runBehaviors();
+
+    expect(runHarvestMock).toHaveBeenCalledWith("c1", "mine:source1");
   });
 
   it("is a no-op when there is no snapshot", () => {
@@ -213,5 +225,177 @@ describe("runBehaviors — DYING interceptor (Story 4.5)", () => {
     );
     expect(runFillMock).toHaveBeenCalledWith("c2", "fill:ext1");
     logSpy.mockRestore();
+  });
+});
+
+describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
+  it("dispatches a Collector with a fill Contract and empty carry to runWithdrawSource, not runFill", () => {
+    // Collector body is ["work", "carry", "carry", "move"]
+    const collector = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 0,
+      carryCapacity: 100,
+      spawning: false,
+      memory: { contract: "fill:spawn1" },
+    };
+    setGame(createMockGame([collector]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runWithdrawSourceMock).toHaveBeenCalledWith("c1");
+    expect(runFillMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches a Collector with a build Contract and empty carry to runWithdrawSource, not runBuild", () => {
+    const collector = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 0,
+      carryCapacity: 100,
+      spawning: false,
+      memory: { contract: "build:site1" },
+    };
+    setGame(createMockGame([collector]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runWithdrawSourceMock).toHaveBeenCalledWith("c1");
+    expect(runBuildMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches a Collector with an upgrade Contract and empty carry to runWithdrawSource, not runUpgrade", () => {
+    const collector = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 0,
+      carryCapacity: 100,
+      spawning: false,
+      memory: { contract: "upgrade:controller1" },
+    };
+    setGame(createMockGame([collector]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runWithdrawSourceMock).toHaveBeenCalledWith("c1");
+    expect(runUpgradeMock).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch a Collector with nonzero carry to runWithdrawSource, dispatches to normal Job behavior instead", () => {
+    const collector = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 25,
+      carryCapacity: 100,
+      spawning: false,
+      memory: { contract: "fill:spawn1" },
+    };
+    setGame(createMockGame([collector]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runWithdrawSourceMock).not.toHaveBeenCalled();
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+  });
+
+  it("does not dispatch a Generalist to runWithdrawSource (harvest body), dispatches to normal Job behavior instead", () => {
+    const generalist = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 0,
+      carryCapacity: 50,
+      spawning: false,
+      memory: { contract: "fill:spawn1" },
+    };
+    setGame(createMockGame([generalist]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runWithdrawSourceMock).not.toHaveBeenCalled();
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+  });
+
+  it("does not dispatch a Harvester to runWithdrawSource (harvest body), dispatches to normal Job behavior instead", () => {
+    const harvester = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "work", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 0,
+      carryCapacity: 50,
+      spawning: false,
+      memory: { contract: "mine:source1" },
+    };
+    setGame(createMockGame([harvester]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runWithdrawSourceMock).not.toHaveBeenCalled();
+    expect(runHarvestMock).toHaveBeenCalledWith("c1", "mine:source1");
+  });
+
+  it("logs and continues dispatch when runWithdrawSource throws for one Creep", () => {
+    runWithdrawSourceMock.mockImplementationOnce(() => {
+      throw new Error("boom");
+    });
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const withdrawing = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "carry", "move"] as BodyPartConstant[],
+      ttl: 1500,
+      carry: 0,
+      carryCapacity: 100,
+      spawning: false,
+      memory: { contract: "fill:spawn1" },
+    };
+    const other = createCreep("c2", "fill:ext1");
+    setGame(createMockGame([withdrawing, other]));
+    buildWorldSnapshot();
+
+    expect(() => runBehaviors()).not.toThrow();
+
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining("runWithdrawSource threw for Creep c1"),
+    );
+    expect(runFillMock).toHaveBeenCalledWith("c2", "fill:ext1");
+    logSpy.mockRestore();
+  });
+
+  it("DYING interceptor takes precedence over WITHDRAW interceptor for a dying Collector", () => {
+    const dyingCollector = {
+      id: "c1",
+      pos: { x: 0, y: 0, roomName: "sim" },
+      body: ["work", "carry", "carry", "move"] as BodyPartConstant[],
+      ttl: 49, // Below CREEP_DYING_TTL_THRESHOLD (50)
+      carry: 0,
+      carryCapacity: 100,
+      spawning: false,
+      memory: { contract: "fill:spawn1" },
+    };
+    setGame(createMockGame([dyingCollector]));
+    buildWorldSnapshot();
+
+    runBehaviors();
+
+    expect(runDyingUnloadMock).toHaveBeenCalledWith("c1");
+    expect(runWithdrawSourceMock).not.toHaveBeenCalled();
+    expect(runFillMock).not.toHaveBeenCalled();
   });
 });

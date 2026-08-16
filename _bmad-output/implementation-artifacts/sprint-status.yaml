@@ -97,8 +97,8 @@ development_status:
   6-2-mine-producer-era-gating: done
   6-3-container-first-construction: done
   6-4-reserved-slot-spawning-specialist-bodies: done
-  6-5-harvester-behavior: backlog
-  6-6-collector-behavior: backlog
+  6-5-harvester-behavior: done
+  6-6-collector-behavior: done
   6-7-deprecation-graceful-degradation: backlog
   6-8-evolution-observation-mvp-exit: backlog
   epic-6-retrospective: optional

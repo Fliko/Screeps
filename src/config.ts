@@ -98,6 +98,8 @@ export interface Config {
   BUILD_STRUCTURE_PRIORITY: Partial<
     Record<BuildableStructureConstant, number>
   > & { default: number };
+  /** Minimum energy a Container must hold to be a valid Collector withdrawal target (Story 6.6). */
+  COLLECTOR_MIN_CONTAINER_ENERGY: number;
 }
 
 const constants: Config = {
@@ -167,6 +169,7 @@ const constants: Config = {
     default: 0,
     container: 10,
   },
+  COLLECTOR_MIN_CONTAINER_ENERGY: 0,
 };
 
 /**
