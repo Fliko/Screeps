@@ -99,16 +99,17 @@ describe("Control Cycle - Phase Order (AC3)", () => {
       (log: string) => typeof log === "string" && log.includes("[control]"),
     );
 
-    // Verify we have 6 phase logs
-    expect(phaseLogs).toHaveLength(6);
+    // Verify we have 7 phase logs (housekeeping + 6 AD-9 phases)
+    expect(phaseLogs).toHaveLength(7);
 
     // Verify phase order
-    expect(phaseLogs[0]).toContain("generate");
-    expect(phaseLogs[1]).toContain("deriveTakenSet");
-    expect(phaseLogs[2]).toContain("validate");
-    expect(phaseLogs[3]).toContain("match");
-    expect(phaseLogs[4]).toContain("spawn");
-    expect(phaseLogs[5]).toContain("execute");
+    expect(phaseLogs[0]).toContain("housekeeping");
+    expect(phaseLogs[1]).toContain("generate");
+    expect(phaseLogs[2]).toContain("deriveTakenSet");
+    expect(phaseLogs[3]).toContain("validate");
+    expect(phaseLogs[4]).toContain("match");
+    expect(phaseLogs[5]).toContain("spawn");
+    expect(phaseLogs[6]).toContain("execute");
 
     // Verify each log is prefixed with [control]
     phaseLogs.forEach((log: string) => {

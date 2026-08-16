@@ -7,6 +7,7 @@ import { measurePhase } from "./control/metering";
 import { spawn } from "./control/spawn";
 import { deriveTakenSet, releaseContracts } from "./control/taken";
 import { validate } from "./control/validate";
+import { cleanupDeadCreeps } from "./housekeeping";
 import type { ContractState } from "./state/contract";
 import { getCurrentSnapshot } from "./world/snapshot";
 
@@ -22,6 +23,12 @@ let booted = false;
  * match → spawn → execute. The boot marker fires once per deploy (Story 1.2).
  */
 export function loop(): void {
+  // Housekeeping: cleanup dead creeps from Memory before control cycle
+  const cleanedCount = measurePhase("housekeeping", cleanupDeadCreeps);
+  if (cleanedCount > 0) {
+    console.log(`[housekeeping] cleaned ${cleanedCount} dead creep entries`);
+  }
+
   if (!booted) {
     console.log(getConstant("LOG_BOOT"));
     booted = true;
