@@ -13,7 +13,8 @@
     "build": "esbuild src/main.ts --bundle --format=cjs --target=es2022 --outfile=dist/main.js",
     "push": "grunt --env=main",
     "push:ptr": "grunt --env=ptr",
-    "push:private": "grunt --env=private"
+    "push:private": "grunt --env=private",
+    "server": "docker compose up"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.7",

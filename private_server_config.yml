@@ -1,0 +1,85 @@
+mods:
+  - screepsmod-auth
+  - screepsmod-admin-utils
+  - screepsmod-mongo
+  - screepsmod-konami
+bots:
+  simplebot: screepsbot-zeswarm
+
+launcherOptions:
+  # If set, automatically ensures all mods are updated
+  autoUpdate: false
+  # If set, forward console messages to terminal
+  logConsole: false
+
+serverConfig: 
+  tickRate: 1000
+  socketUpdateRate: 1000
+# # Local private Screeps server — screeps-launcher config (pinned v1.17.0, CAP-7).
+# #
+# # Copy this file to config.yml (gitignored, same convention as screeps.json).
+# #
+# # Steam key: set steamKey below, or drop your key (no quotes, no trailing
+# # newline needed) in a screeps-launcher/STEAM_KEY file instead — the binary
+# # checks for that file by default when steamKeyFile is unset (verified
+# # against screeps-launcher's launcher/config.go: it os.Stat()s a file
+# # literally named "STEAM_KEY" in its working directory). There is no
+# # STEAM_KEY environment-variable fallback for the plain binary — that only
+# # applies to screeps-launcher's separate Docker image, which this repo does
+# # not use (no Docker packaging).
+# #
+# # Requires a MongoDB instance and a Redis instance reachable at the hosts
+# # below (screepsmod-mongo's storage backend needs both). Install both
+# # natively; no Docker packaging in this repo (see spec Never-boundary).
+
+# steamKey: E42C1F6286FB347D85CF373BF2D8DF83
+
+# env:
+#   shared:
+#     MONGO_HOST: localhost
+#     REDIS_HOST: localhost
+
+# # Pins the underlying `screeps` engine package to the version documented in
+# # stack.md. This is an intentional `~4.3.0` range, not an exact pin — it is
+# # stack.md's own architecture-level pin for the engine screeps-launcher pulls
+# # in, distinct from screeps-launcher itself (below), which stays exact.
+# version: "~4.3.0"
+
+# # Recommended mod bundle (spec Always-boundary): auth for a real login,
+# # admin-utils for tick-rate/admin console commands, mongo for the storage
+# # backend swap that `npm run server:reset` scripts against.
+# mods:
+#   - screepsmod-auth
+#   - screepsmod-admin-utils
+#   - screepsmod-mongo
+
+# pinnedPackages:
+#   ssri: 8.0.1
+#   cacache: 15.3.0
+#   passport-steam: 1.0.17
+#   minipass-fetch: 2.1.2
+#   express-rate-limit: 6.7.0
+#   isolated-vm: 6.1.2
+# # pinnedPackages removed 2026-08-17: it was pinning transitive deps
+# # (ssri/cacache/minipass-fetch/passport-steam) to versions yarn's own
+# # install log flagged as incompatible with what the mods actually request
+# # (e.g. "Resolution field cacache@15.3.0 is incompatible with requested
+# # version cacache@^20.0.1") — yarn's `resolutions` force-installs the pin
+# # regardless of the warning, which crash-looped backend/main/runner on
+# # startup. Let yarn resolve these naturally; revisit real version pinning
+# # later once the server actually boots.
+
+# # Requires screepsmod-admin-utils (above) to take effect.
+# serverConfig:
+#   # In milliseconds. screeps-launcher's own config.sample.yml pairs 1000ms
+#   # with: "This is a lower bound. Users reported problems when set too
+#   # low." — 200ms is a deliberate, accepted-risk departure below that
+#   # documented floor (operator decision, 2026-08-17); watch for instability
+#   # and raise it back toward 1000ms if the warned-about problems appear.
+#   # Ticks still run unthrottled by anything in this bot's own code; this is
+#   # purely the launcher's floor.
+#   tickRate: 200
+#   socketUpdateRate: 200
+
+# bots:
+#   simplebot: screepsbot-zeswarm
