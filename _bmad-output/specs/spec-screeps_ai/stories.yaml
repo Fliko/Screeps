@@ -1,0 +1,130 @@
+- id: "1"
+  title: Local Private Server
+  description: >-
+    Stand up the local screeps-launcher dev server: one-command bootstrap,
+    fast RCL1 reset without a process restart, identical dist/main.js deploy
+    artifact, unthrottled tick cadence, and adoption as the default
+    per-story verification target ahead of PTR/live. See SPEC.md CAP-7.
+  done_checkpoint: true
+  invoke_dev_with: >-
+    screeps-launcher v1.17.0 wraps the screeps ~4.3.0 engine (AD-14).
+    Extend the existing push script with a local profile rather than
+    inventing a new deploy path (addendum.md). This story touches only
+    tooling/deploy scripts and screeps-launcher/ config — no src/ bot-code
+    changes, and nothing here may branch bot behavior by environment.
+
+- id: "2"
+  title: Node Tagging and Amended Job/Contract Id Grammar
+  description: >-
+    Add the NodeName typed union to board/job.ts, have every Producer tag
+    its Jobs with a node, and change the Contract id grammar from
+    type:targetId to type:node:targetId. See SPEC.md CAP-1, CAP-2, and
+    node-pool-model.md.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    NodeName is defined once in board/job.ts, alongside JobType — Producers
+    tag Jobs with it, and config.ts's per-Node table (story 4) will key off
+    this same union, so don't let a second free-string naming scheme exist
+    on either side. A Job whose node has no matching config entry in the
+    active room profile is never eligible — treat as NumWorkers()=0, never
+    throw. Validators must parse type, node, and targetId from the id.
+
+- id: "3"
+  title: Contract-Commitment Protection for Non-Matching Delivery Paths
+  description: >-
+    Make DYING-unload (and any future non-Matching energy-delivery path)
+    prefer a needy structure carrying no live incoming Contract over one
+    already committed to another creep, so it never snipes a target
+    mid-flight. See SPEC.md CAP-2.
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Check "live incoming Contract" via the node-prefixed Contract count
+    introduced in story 2 — no new lookup table. This closes out the
+    Contract-layer amendments; after this story lands, CAP-1/CAP-2's
+    Stage 2 changes are complete.
+
+- id: "4"
+  title: Node Config Surface
+  description: >-
+    Build the per-room, per-Node config table in config.ts (NumWorkers,
+    Priority, taint, balancer per Node), successor to JOB_POLICY_TABLE, with
+    a world/-owned world-state-summary type these functions read. See
+    SPEC.md CAP-6, CAP-8, and node-pool-model.md.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    NumWorkers/Priority take exactly one argument — the world-state-summary
+    — and read nothing else: no Game/Memory calls, no closures over mutable
+    state (AD-12). The summary type lives in world/, exported for config.ts
+    to import, never independently redeclared. This story is config-surface
+    plumbing only; it does not need Matching (story 5) to consume it yet.
+
+- id: "5"
+  title: Node-Gated Matching Cascade and Balancer
+  description: >-
+    Replace tier-first Matching with Node Priority -> within-Node balancer
+    (LEAST_FULL or STICKY) -> distance, gated by each Node's live
+    NumWorkers() colony-wide cap. See SPEC.md CAP-3 and node-pool-model.md.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Distance stays Chebyshev-only, no pathfinding in scoring (AD-7 kept
+    unchanged). Priority is evaluated once per Node per Tick, not once per
+    Job. NumWorkers() gates eligibility via a live prefix-count over current
+    Contracts, no cached occupancy. Required test coverage per SPEC.md
+    Constraints (NFR-4): at least one population-distribution test — N Jobs
+    of type A + M Jobs of type B + population P — not only single-pair
+    scoring tests; this is the exact gap that let Stage 1's starvation ship
+    untested.
+
+- id: "6"
+  title: Taints and Tolerations Eligibility Gate
+  description: >-
+    Give each Node a taint tag and each body-kind config a tolerations
+    list; a candidate is eligible for a Node only if its tolerations
+    include the Node's taint, checked alongside existing body/requirements
+    eligibility. See SPEC.md CAP-5 and node-pool-model.md.
+  invoke_dev_with: >-
+    Generalist body tolerates every known taint; a specialist body's
+    tolerations list only its own. This check applies in both call sites
+    that pick a target for a body — Matching (story 5) and Reserved-mode
+    spawn selection (story 7).
+
+- id: "7"
+  title: Reserved-Mode Spawn Node Consultation
+  description: >-
+    Make control/spawn's Reserved-slot target selection consult the same
+    per-Node config (Priority, NumWorkers, balancer) Matching uses, and
+    enforce NumWorkers() as a hard headcount cap whether a Node's
+    population is Reserved or Pulled. See SPEC.md CAP-4.
+  done_checkpoint: true
+  invoke_dev_with: >-
+    One mechanism, two call sites — do not build a separate spawn-side
+    scoring algorithm. Spawn only for a vacant Reserved target while that
+    Node's current headcount is below NumWorkers(); it is never a
+    Pulled-only concept a Reserved Node can silently ignore. This closes
+    out the scheduler-core group (stories 4-7).
+
+- id: "8"
+  title: Retire Discrete Era
+  description: >-
+    Remove deriveEra and the generalist/specialist AD-5 value from
+    world/snapshot.ts and every consumer — no discrete stage value survives
+    anywhere in the design. See SPEC.md CAP-6 and the AD-5 amendment.
+  spec_checkpoint: true
+  invoke_dev_with: >-
+    Land this only after stories 4 (config surface) and 5 (matching
+    cascade) are live, so nothing depends on Era mid-migration. This is a
+    deletion of shipped Stage 1 mechanism, not new capability — review
+    accordingly.
+
+- id: "9"
+  title: Gated Per-Tick Observability Logging
+  description: >-
+    Add a single config.ts log-level flag (default errors-only), and wire
+    existing CPU metering plus the new per-Node resolved-config log line
+    behind it in the same story. See SPEC.md CAP-10, CAP-11.
+  done_checkpoint: true
+  invoke_dev_with: >-
+    Build the log-level gate first, then add the resolved-config log line
+    already gated by it — never let resolved-config output ship ungated
+    even momentarily. At default level, a Tick's console output must
+    contain nothing but critical-error lines, if any.

@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-08-08
-last_updated: 2026-08-14
+last_updated: 08-16-2026 15:22
 project: screeps_ai
 project_key: NOKEY
 tracking_system: file-system
@@ -101,26 +101,49 @@ development_status:
   6-6-collector-behavior: done
   6-7-deprecation-graceful-degradation: backlog
   6-8-evolution-observation-mvp-exit: backlog
-  epic-6-retrospective: optional
+  epic-6-retrospective: done
 
 action_items:
   - epic: 1
-    action: "Architectural Principle: Interface-Based Testability - All Game/Memory access must go through injectable interfaces. No direct Game or Memory global access outside adapter modules."
+    action: "Architectural Principle: Interface-Based Testability - All Game/Memory
+      access must go through injectable interfaces. No direct Game or Memory global
+      access outside adapter modules."
     owner: "Charlie (Senior Dev)"
-    status: open
+    status: done
   - epic: 1
-    action: "Test-Driven Design with Interfaces - Define interfaces/seams first, then implement. Prevents testing gaps discovered after implementation."
+    action: "Test-Driven Design with Interfaces - Define interfaces/seams first, then
+      implement. Prevents testing gaps discovered after implementation."
     owner: "Amelia (Developer)"
-    status: open
+    status: done
   - epic: 1
-    action: "AD-10 Seam Enforcement - No find/look/getObjectById/terrain calls outside world/ module. Add to code review checklist."
+    action: "AD-10 Seam Enforcement - No find/look/getObjectById/terrain calls outside
+      world/ module. Add to code review checklist."
     owner: "Dana (QA Engineer)"
-    status: open
+    status: done
   - epic: 1
-    action: "Document Interface-Based Testing Pattern - Capture the Game/Memory adapter pattern as a reference. Include examples from Epic 1."
+    action: "Document Interface-Based Testing Pattern - Capture the Game/Memory adapter
+      pattern as a reference. Include examples from Epic 1."
     owner: "Elena (Junior Dev)"
     status: open
   - epic: 1
-    action: "World Snapshot Interface Design (Epic 2 Prep) - Design the world snapshot interface that Producers will consume. Build on Game adapter pattern."
+    action: "World Snapshot Interface Design (Epic 2 Prep) - Design the world snapshot
+      interface that Producers will consume. Build on Game adapter pattern."
     owner: "Charlie (Senior Dev)"
+    status: done
+  - id: "epic-6-retro-item-6-retire-ad-5-binary-era-and-ad-7-s-tier-o"
+    epic: 6
+    action: "Retire AD-5 (binary Era) and AD-7's tier-only, non-proportional matching
+      cascade; supersede with a config-driven Stage Ladder + Workforce Pool scheduler
+      (colony-wide caps, round-robin distribution, graduated stages replacing binary
+      generalist/specialist). See epic-6-retro-2026-08-16.md Findings 1, 2, 5."
+    owner: "Fliko"
     status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-16.md"
+  - id: "epic-6-retro-item-7-stage-2-test-strategy-must-include-a-pop"
+    epic: 6
+    action: "Stage 2 test strategy must include a population-distribution test class
+      (N jobs of type A + M jobs of type B + population P -> does B ever get served),
+      not only per-pair scoring tests. See epic-6-retro-2026-08-16.md Finding 3."
+    owner: "Fliko"
+    status: open
+    ref: "_bmad-output/implementation-artifacts/epic-6-retro-2026-08-16.md"
