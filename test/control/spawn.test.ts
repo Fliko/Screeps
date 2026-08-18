@@ -9,6 +9,7 @@ import type { CreepStub, GameAdapter, StructureStub } from "../../src/game";
 import { setGame } from "../../src/game";
 import * as snapshotModule from "../../src/world/snapshot";
 import { buildWorldSnapshot } from "../../src/world/snapshot";
+import { PULLED_NODE_BY_TYPE } from "../helpers/node-fixtures";
 
 // Screeps constants (OK, STRUCTURE_SPAWN) are ambient `declare const` types
 // the real engine provides as runtime globals — vitest/Node does not.
@@ -49,8 +50,9 @@ function createSpawnStub(id: string, spawning = false): StructureStub {
 
 function createMineJob(targetId: string): Job {
   return {
-    id: makeJobId("mine", targetId),
+    id: makeJobId("mine", "mines", targetId),
     type: "mine",
+    node: "mines",
     targetId,
     pos: { x: 0, y: 0, roomName: "sim" },
     tier: "high",
@@ -69,9 +71,11 @@ function createPulledJob(
   type: "fill" | "build" | "upgrade",
   targetId: string,
 ): Job {
+  const node = PULLED_NODE_BY_TYPE[type];
   return {
-    id: makeJobId(type, targetId),
+    id: makeJobId(type, node, targetId),
     type,
+    node,
     targetId,
     pos: { x: 0, y: 0, roomName: "sim" },
     tier: "critical",
@@ -565,7 +569,7 @@ describe("spawn — I/O matrix", () => {
       getConstant("BODY_COMPOSITIONS").harvester.parts,
       "harvester-sim-100",
       expect.objectContaining({
-        memory: expect.objectContaining({ contract: "mine:S1" }),
+        memory: expect.objectContaining({ contract: "mine:mines:S1" }),
       }),
     );
   });
@@ -786,7 +790,7 @@ describe("spawn — I/O matrix", () => {
       getConstant("BODY_COMPOSITIONS").harvester.parts,
       "harvester-sim-100",
       expect.objectContaining({
-        memory: expect.objectContaining({ contract: "mine:S1" }),
+        memory: expect.objectContaining({ contract: "mine:mines:S1" }),
       }),
     );
   });

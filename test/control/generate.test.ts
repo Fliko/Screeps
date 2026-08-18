@@ -16,8 +16,9 @@ describe("formatBoardLog", () => {
   it("lists each job id with tier", () => {
     const jobs: Job[] = [
       {
-        id: "fill:ext1",
+        id: "fill:extensions:ext1",
         type: "fill",
+        node: "extensions",
         targetId: "ext1",
         pos: { x: 1, y: 1, roomName: "sim" },
         tier: "critical",
@@ -28,8 +29,9 @@ describe("formatBoardLog", () => {
         requirements: { body: ["work", "carry", "move"], ttlFloor: 200 },
       },
       {
-        id: "build:site1",
+        id: "build:build:site1",
         type: "build",
+        node: "build",
         targetId: "site1",
         pos: { x: 2, y: 2, roomName: "sim" },
         tier: "medium",
@@ -42,7 +44,7 @@ describe("formatBoardLog", () => {
     ];
     const board: Board = { jobs };
     expect(formatBoardLog(board)).toBe(
-      "[board] 2 jobs: fill:ext1(critical) build:site1(medium)",
+      "[board] 2 jobs: fill:extensions:ext1(critical) build:build:site1(medium)",
     );
   });
 });

@@ -9,6 +9,7 @@ import type { CreepStub, GameAdapter } from "../../src/game";
 import { setGame } from "../../src/game";
 import * as snapshotModule from "../../src/world/snapshot";
 import { buildWorldSnapshot } from "../../src/world/snapshot";
+import { NODE_BY_TYPE } from "../helpers/node-fixtures";
 
 const EMPTY_TAKEN_SET = deriveTakenSet([]);
 
@@ -52,6 +53,7 @@ function createMockGame(creeps: CreepStub[]): GameAdapter {
 function makeTestJob(type: JobType, targetId: string, ttlFloor = 200): Job {
   return makeJob({
     type,
+    node: NODE_BY_TYPE[type],
     targetId,
     pos: { x: 1, y: 1, roomName: "sim" },
     tier: "critical",
@@ -84,105 +86,113 @@ afterEach(() => {
 
 describe("validate — I/O matrix", () => {
   it("clears the Contract when the Job vanished from the Board", () => {
-    const creep = createCreep("c1", "fill:spawn1");
+    const creep = createCreep("c1", "fill:spawns:spawn1");
     stage([creep], []);
 
-    expect(validate(EMPTY_TAKEN_SET)).toEqual([{ jobId: "fill:spawn1" }]);
+    expect(validate(EMPTY_TAKEN_SET)).toEqual([
+      { jobId: "fill:spawns:spawn1" },
+    ]);
     expect(creep.memory.contract).toBeUndefined();
   });
 
   it("clears the Contract when ttl is below the Job's ttlFloor", () => {
-    const creep = createCreep("c1", "fill:spawn1", 199);
+    const creep = createCreep("c1", "fill:spawns:spawn1", 199);
     stage([creep], [makeTestJob("fill", "spawn1", 200)]);
 
-    expect(validate(EMPTY_TAKEN_SET)).toEqual([{ jobId: "fill:spawn1" }]);
+    expect(validate(EMPTY_TAKEN_SET)).toEqual([
+      { jobId: "fill:spawns:spawn1" },
+    ]);
     expect(creep.memory.contract).toBeUndefined();
   });
 
   it("leaves a still-valid Contract untouched and out of the returned array", () => {
-    const creep = createCreep("c1", "fill:spawn1", 1500);
+    const creep = createCreep("c1", "fill:spawns:spawn1", 1500);
     stage([creep], [makeTestJob("fill", "spawn1", 200)]);
 
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
-    expect(creep.memory.contract).toBe("fill:spawn1");
+    expect(creep.memory.contract).toBe("fill:spawns:spawn1");
   });
 
   it("keeps a mine Contract valid even with no Board Job for it", () => {
-    const creep = createCreep("c1", "mine:source1", 5);
+    const creep = createCreep("c1", "mine:mines:source1", 5);
     stage([creep], []);
 
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
-    expect(creep.memory.contract).toBe("mine:source1");
+    expect(creep.memory.contract).toBe("mine:mines:source1");
   });
 
   it("ignores carry state — two Creeps differing only in carry share the outcome", () => {
-    const empty = createCreep("c1", "fill:spawn1", 1500, 0);
-    const full = createCreep("c2", "fill:spawn1", 1500, 50);
+    const empty = createCreep("c1", "fill:spawns:spawn1", 1500, 0);
+    const full = createCreep("c2", "fill:spawns:spawn1", 1500, 50);
     stage([empty, full], [makeTestJob("fill", "spawn1", 200)]);
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
-    expect(empty.memory.contract).toBe("fill:spawn1");
-    expect(full.memory.contract).toBe("fill:spawn1");
+    expect(empty.memory.contract).toBe("fill:spawns:spawn1");
+    expect(full.memory.contract).toBe("fill:spawns:spawn1");
 
-    const emptyGone = createCreep("c1", "fill:spawn1", 1500, 0);
-    const fullGone = createCreep("c2", "fill:spawn1", 1500, 50);
+    const emptyGone = createCreep("c1", "fill:spawns:spawn1", 1500, 0);
+    const fullGone = createCreep("c2", "fill:spawns:spawn1", 1500, 50);
     stage([emptyGone, fullGone], []);
     expect(validate(EMPTY_TAKEN_SET)).toEqual([
-      { jobId: "fill:spawn1" },
-      { jobId: "fill:spawn1" },
+      { jobId: "fill:spawns:spawn1" },
+      { jobId: "fill:spawns:spawn1" },
     ]);
     expect(emptyGone.memory.contract).toBeUndefined();
     expect(fullGone.memory.contract).toBeUndefined();
   });
 
   it("returns [] and clears nothing when there is no snapshot", () => {
-    const creep = createCreep("c1", "fill:spawn1");
+    const creep = createCreep("c1", "fill:spawns:spawn1");
     stage([creep], []);
     vi.spyOn(snapshotModule, "getCurrentSnapshot").mockReturnValue(undefined);
 
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
-    expect(creep.memory.contract).toBe("fill:spawn1");
+    expect(creep.memory.contract).toBe("fill:spawns:spawn1");
   });
 });
 
 describe("validate — guards and cohorts", () => {
   it("keeps the Contract of a Spawning Creep with an open Job (FR-16, FR-29)", () => {
-    const creep = createCreep("spawning1", "fill:spawn1", 0, 0, true);
+    const creep = createCreep("spawning1", "fill:spawns:spawn1", 0, 0, true);
     stage([creep], [makeTestJob("fill", "spawn1", 200)]);
 
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
-    expect(creep.memory.contract).toBe("fill:spawn1");
+    expect(creep.memory.contract).toBe("fill:spawns:spawn1");
   });
 
   it("clears a NON-spawning Creep at ttl 0 — it is dying, not spawning", () => {
-    const creep = createCreep("dying1", "fill:spawn1", 0, 0, false);
+    const creep = createCreep("dying1", "fill:spawns:spawn1", 0, 0, false);
     stage([creep], [makeTestJob("fill", "spawn1", 200)]);
 
-    expect(validate(EMPTY_TAKEN_SET)).toEqual([{ jobId: "fill:spawn1" }]);
+    expect(validate(EMPTY_TAKEN_SET)).toEqual([
+      { jobId: "fill:spawns:spawn1" },
+    ]);
     expect(creep.memory.contract).toBeUndefined();
   });
 
   it("still clears a Spawning Creep's Contract when its Job vanished", () => {
-    const creep = createCreep("spawning1", "fill:spawn1", 0, 0, true);
+    const creep = createCreep("spawning1", "fill:spawns:spawn1", 0, 0, true);
     stage([creep], []);
 
-    expect(validate(EMPTY_TAKEN_SET)).toEqual([{ jobId: "fill:spawn1" }]);
+    expect(validate(EMPTY_TAKEN_SET)).toEqual([
+      { jobId: "fill:spawns:spawn1" },
+    ]);
     expect(creep.memory.contract).toBeUndefined();
   });
 
   it("bails with [] when no Board exists, rather than mass-clearing", () => {
-    const creep = createCreep("c1", "fill:spawn1");
+    const creep = createCreep("c1", "fill:spawns:spawn1");
     stage([creep], []);
     vi.spyOn(registry, "getBoard").mockReturnValue(undefined);
 
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
-    expect(creep.memory.contract).toBe("fill:spawn1");
+    expect(creep.memory.contract).toBe("fill:spawns:spawn1");
   });
 
   it("handles a mixed cohort, returning exactly the cleared jobIds", () => {
-    const keepOpen = createCreep("c1", "fill:spawn1", 1500);
-    const gone = createCreep("c2", "build:site1", 1500);
-    const tooOld = createCreep("c3", "upgrade:ctrl1", 10);
-    const mine = createCreep("c4", "mine:source1", 10);
+    const keepOpen = createCreep("c1", "fill:spawns:spawn1", 1500);
+    const gone = createCreep("c2", "build:build:site1", 1500);
+    const tooOld = createCreep("c3", "upgrade:upgrade:ctrl1", 10);
+    const mine = createCreep("c4", "mine:mines:source1", 10);
     const idle = createCreep("c5");
     stage(
       [keepOpen, gone, tooOld, mine, idle],
@@ -195,18 +205,18 @@ describe("validate — guards and cohorts", () => {
     const cleared = validate(EMPTY_TAKEN_SET);
 
     expect(cleared).toEqual([
-      { jobId: "build:site1" },
-      { jobId: "upgrade:ctrl1" },
+      { jobId: "build:build:site1" },
+      { jobId: "upgrade:upgrade:ctrl1" },
     ]);
-    expect(keepOpen.memory.contract).toBe("fill:spawn1");
+    expect(keepOpen.memory.contract).toBe("fill:spawns:spawn1");
     expect(gone.memory.contract).toBeUndefined();
     expect(tooOld.memory.contract).toBeUndefined();
-    expect(mine.memory.contract).toBe("mine:source1");
+    expect(mine.memory.contract).toBe("mine:mines:source1");
     expect(idle.memory.contract).toBeUndefined();
   });
 
   it("does not report a clear when the Creep can no longer be resolved", () => {
-    const creep = createCreep("c1", "fill:spawn1");
+    const creep = createCreep("c1", "fill:spawns:spawn1");
     setGame({
       ...createMockGame([creep]),
       getObjectById: (() => undefined) as GameAdapter["getObjectById"],
@@ -216,14 +226,14 @@ describe("validate — guards and cohorts", () => {
 
     expect(validate(EMPTY_TAKEN_SET)).toEqual([]);
     // Memory was never reachable, so the Contract string is still in place.
-    expect(creep.memory.contract).toBe("fill:spawn1");
+    expect(creep.memory.contract).toBe("fill:spawns:spawn1");
   });
 
   it("mutates the memory of the Creep resolved through getObjectById", () => {
-    const snapshotStub = createCreep("c1", "fill:spawn1");
+    const snapshotStub = createCreep("c1", "fill:spawns:spawn1");
     // A distinct live object under the same id — proves validate clears what the
     // Game adapter resolves, not the snapshot's copy.
-    const liveCreep = { id: "c1", memory: { contract: "fill:spawn1" } };
+    const liveCreep = { id: "c1", memory: { contract: "fill:spawns:spawn1" } };
     setGame({
       ...createMockGame([snapshotStub]),
       getObjectById: (() =>
@@ -232,7 +242,9 @@ describe("validate — guards and cohorts", () => {
     resetBoard();
     buildWorldSnapshot();
 
-    expect(validate(EMPTY_TAKEN_SET)).toEqual([{ jobId: "fill:spawn1" }]);
+    expect(validate(EMPTY_TAKEN_SET)).toEqual([
+      { jobId: "fill:spawns:spawn1" },
+    ]);
     expect(liveCreep.memory.contract).toBeUndefined();
   });
 });

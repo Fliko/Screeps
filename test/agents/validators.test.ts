@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { isContractValid } from "../../src/agents/validators";
 import type { Job, JobType } from "../../src/board/job";
 import { makeJob } from "../../src/board/job";
+import { NODE_BY_TYPE } from "../helpers/node-fixtures";
 
 const NON_MINE_TYPES: readonly Exclude<JobType, "mine">[] = [
   "fill",
@@ -12,6 +13,7 @@ const NON_MINE_TYPES: readonly Exclude<JobType, "mine">[] = [
 function job(type: JobType, ttlFloor: number): Job {
   return makeJob({
     type,
+    node: NODE_BY_TYPE[type],
     targetId: "target1",
     pos: { x: 1, y: 1, roomName: "sim" },
     tier: "critical",

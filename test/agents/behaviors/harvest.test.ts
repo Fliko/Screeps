@@ -135,7 +135,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(
@@ -183,7 +183,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(creep.harvest).toHaveBeenCalledWith(source);
     expect(creep.transfer).toHaveBeenCalled();
@@ -227,7 +227,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(creep.harvest).toHaveBeenCalledWith(source);
     expect(creep.transfer).not.toHaveBeenCalled();
@@ -276,7 +276,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(logSpy).not.toHaveBeenCalled();
     logSpy.mockRestore();
@@ -325,7 +325,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(logSpy).not.toHaveBeenCalled();
     logSpy.mockRestore();
@@ -355,7 +355,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
     buildWorldSnapshot();
 
     // No containers in snapshot
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(creep.moveTo).not.toHaveBeenCalled();
     expect(creep.harvest).not.toHaveBeenCalled();
@@ -397,7 +397,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    expect(() => runHarvest("creep1", "mine:source1")).not.toThrow();
+    expect(() => runHarvest("creep1", "mine:mines:source1")).not.toThrow();
   });
 
   it("is a silent no-op when the Source cannot be resolved", () => {
@@ -425,7 +425,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(creep.moveTo).not.toHaveBeenCalled();
     expect(creep.harvest).not.toHaveBeenCalled();
@@ -475,7 +475,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:harvest]"),
@@ -526,7 +526,7 @@ describe("runHarvest — Harvester behavior (Story 6.5)", () => {
       (snapshot.structures as any) = [container];
     }
 
-    runHarvest("creep1", "mine:source1");
+    runHarvest("creep1", "mine:mines:source1");
 
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:harvest]"),

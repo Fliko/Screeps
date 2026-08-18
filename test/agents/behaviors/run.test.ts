@@ -87,13 +87,13 @@ afterEach(() => {
 
 describe("runBehaviors — dispatch", () => {
   it("calls runFill for a Creep holding a fill Contract", () => {
-    const creep = createCreep("c1", "fill:spawn1");
+    const creep = createCreep("c1", "fill:spawns:spawn1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
     runBehaviors();
 
-    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawns:spawn1");
   });
 
   it("is a no-op for a Creep with no Contract", () => {
@@ -107,33 +107,36 @@ describe("runBehaviors — dispatch", () => {
   });
 
   it("calls runBuild for a Creep holding a build Contract", () => {
-    const creep = createCreep("c1", "build:site1");
+    const creep = createCreep("c1", "build:build:site1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
     runBehaviors();
 
-    expect(runBuildMock).toHaveBeenCalledWith("c1", "build:site1");
+    expect(runBuildMock).toHaveBeenCalledWith("c1", "build:build:site1");
   });
 
   it("calls runUpgrade for a Creep holding an upgrade Contract", () => {
-    const creep = createCreep("c1", "upgrade:controller1");
+    const creep = createCreep("c1", "upgrade:upgrade:controller1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
     runBehaviors();
 
-    expect(runUpgradeMock).toHaveBeenCalledWith("c1", "upgrade:controller1");
+    expect(runUpgradeMock).toHaveBeenCalledWith(
+      "c1",
+      "upgrade:upgrade:controller1",
+    );
   });
 
   it("calls runHarvest for a Creep holding a mine Contract (Story 6.5)", () => {
-    const creep = createCreep("c1", "mine:source1");
+    const creep = createCreep("c1", "mine:mines:source1");
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
     runBehaviors();
 
-    expect(runHarvestMock).toHaveBeenCalledWith("c1", "mine:source1");
+    expect(runHarvestMock).toHaveBeenCalledWith("c1", "mine:mines:source1");
   });
 
   it("is a no-op when there is no snapshot", () => {
@@ -144,8 +147,8 @@ describe("runBehaviors — dispatch", () => {
   });
 
   it("dispatches each Contracted Creep in the snapshot independently", () => {
-    const c1 = createCreep("c1", "fill:spawn1");
-    const c2 = createCreep("c2", "fill:ext1");
+    const c1 = createCreep("c1", "fill:spawns:spawn1");
+    const c2 = createCreep("c2", "fill:extensions:ext1");
     const idle = createCreep("c3");
     setGame(createMockGame([c1, c2, idle]));
     buildWorldSnapshot();
@@ -153,14 +156,18 @@ describe("runBehaviors — dispatch", () => {
     runBehaviors();
 
     expect(runFillMock).toHaveBeenCalledTimes(2);
-    expect(runFillMock).toHaveBeenNthCalledWith(1, "c1", "fill:spawn1");
-    expect(runFillMock).toHaveBeenNthCalledWith(2, "c2", "fill:ext1");
+    expect(runFillMock).toHaveBeenNthCalledWith(1, "c1", "fill:spawns:spawn1");
+    expect(runFillMock).toHaveBeenNthCalledWith(
+      2,
+      "c2",
+      "fill:extensions:ext1",
+    );
   });
 });
 
 describe("runBehaviors — DYING interceptor (Story 4.5)", () => {
   it("dispatches a Creep below the ttl threshold to runDyingUnload, not its Job behavior", () => {
-    const creep = createCreep("c1", "fill:spawn1", { ttl: 49 });
+    const creep = createCreep("c1", "fill:spawns:spawn1", { ttl: 49 });
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
@@ -184,18 +191,18 @@ describe("runBehaviors — DYING interceptor (Story 4.5)", () => {
   });
 
   it("does not treat a Creep at or above the ttl threshold as dying", () => {
-    const creep = createCreep("c1", "fill:spawn1", { ttl: 50 });
+    const creep = createCreep("c1", "fill:spawns:spawn1", { ttl: 50 });
     setGame(createMockGame([creep]));
     buildWorldSnapshot();
 
     runBehaviors();
 
     expect(runDyingUnloadMock).not.toHaveBeenCalled();
-    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawns:spawn1");
   });
 
   it("does not treat a spawning Creep (ttl reads 0) as dying", () => {
-    const creep = createCreep("c1", "fill:spawn1", {
+    const creep = createCreep("c1", "fill:spawns:spawn1", {
       ttl: 0,
       spawning: true,
     });
@@ -213,8 +220,8 @@ describe("runBehaviors — DYING interceptor (Story 4.5)", () => {
       throw new Error("boom");
     });
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-    const dying = createCreep("c1", "fill:spawn1", { ttl: 10 });
-    const other = createCreep("c2", "fill:ext1");
+    const dying = createCreep("c1", "fill:spawns:spawn1", { ttl: 10 });
+    const other = createCreep("c2", "fill:extensions:ext1");
     setGame(createMockGame([dying, other]));
     buildWorldSnapshot();
 
@@ -223,7 +230,7 @@ describe("runBehaviors — DYING interceptor (Story 4.5)", () => {
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining("runDyingUnload threw for Creep c1"),
     );
-    expect(runFillMock).toHaveBeenCalledWith("c2", "fill:ext1");
+    expect(runFillMock).toHaveBeenCalledWith("c2", "fill:extensions:ext1");
     logSpy.mockRestore();
   });
 });
@@ -239,7 +246,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 100,
       spawning: false,
-      memory: { contract: "fill:spawn1" },
+      memory: { contract: "fill:spawns:spawn1" },
     };
     setGame(createMockGame([collector]));
     buildWorldSnapshot();
@@ -259,7 +266,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 100,
       spawning: false,
-      memory: { contract: "build:site1" },
+      memory: { contract: "build:build:site1" },
     };
     setGame(createMockGame([collector]));
     buildWorldSnapshot();
@@ -279,7 +286,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 100,
       spawning: false,
-      memory: { contract: "upgrade:controller1" },
+      memory: { contract: "upgrade:upgrade:controller1" },
     };
     setGame(createMockGame([collector]));
     buildWorldSnapshot();
@@ -299,7 +306,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 25,
       carryCapacity: 100,
       spawning: false,
-      memory: { contract: "fill:spawn1" },
+      memory: { contract: "fill:spawns:spawn1" },
     };
     setGame(createMockGame([collector]));
     buildWorldSnapshot();
@@ -307,7 +314,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
     runBehaviors();
 
     expect(runWithdrawSourceMock).not.toHaveBeenCalled();
-    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawns:spawn1");
   });
 
   it("does not dispatch a Generalist to runWithdrawSource (harvest body), dispatches to normal Job behavior instead", () => {
@@ -319,7 +326,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 50,
       spawning: false,
-      memory: { contract: "fill:spawn1" },
+      memory: { contract: "fill:spawns:spawn1" },
     };
     setGame(createMockGame([generalist]));
     buildWorldSnapshot();
@@ -327,7 +334,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
     runBehaviors();
 
     expect(runWithdrawSourceMock).not.toHaveBeenCalled();
-    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawn1");
+    expect(runFillMock).toHaveBeenCalledWith("c1", "fill:spawns:spawn1");
   });
 
   it("does not dispatch a Harvester to runWithdrawSource (harvest body), dispatches to normal Job behavior instead", () => {
@@ -339,7 +346,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 50,
       spawning: false,
-      memory: { contract: "mine:source1" },
+      memory: { contract: "mine:mines:source1" },
     };
     setGame(createMockGame([harvester]));
     buildWorldSnapshot();
@@ -347,7 +354,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
     runBehaviors();
 
     expect(runWithdrawSourceMock).not.toHaveBeenCalled();
-    expect(runHarvestMock).toHaveBeenCalledWith("c1", "mine:source1");
+    expect(runHarvestMock).toHaveBeenCalledWith("c1", "mine:mines:source1");
   });
 
   it("logs and continues dispatch when runWithdrawSource throws for one Creep", () => {
@@ -363,9 +370,9 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 100,
       spawning: false,
-      memory: { contract: "fill:spawn1" },
+      memory: { contract: "fill:spawns:spawn1" },
     };
-    const other = createCreep("c2", "fill:ext1");
+    const other = createCreep("c2", "fill:extensions:ext1");
     setGame(createMockGame([withdrawing, other]));
     buildWorldSnapshot();
 
@@ -374,7 +381,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
     expect(logSpy).toHaveBeenCalledWith(
       expect.stringContaining("runWithdrawSource threw for Creep c1"),
     );
-    expect(runFillMock).toHaveBeenCalledWith("c2", "fill:ext1");
+    expect(runFillMock).toHaveBeenCalledWith("c2", "fill:extensions:ext1");
     logSpy.mockRestore();
   });
 
@@ -387,7 +394,7 @@ describe("runBehaviors — WITHDRAW interceptor (Story 6.6)", () => {
       carry: 0,
       carryCapacity: 100,
       spawning: false,
-      memory: { contract: "fill:spawn1" },
+      memory: { contract: "fill:spawns:spawn1" },
     };
     setGame(createMockGame([dyingCollector]));
     buildWorldSnapshot();

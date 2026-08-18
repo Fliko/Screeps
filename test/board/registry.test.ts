@@ -11,10 +11,12 @@ import {
   getBoard,
   resetBoard,
 } from "../../src/board/registry";
+import { NODE_BY_TYPE } from "../helpers/node-fixtures";
 
 function makeTestJob(type: JobType, targetId: string): Job {
   return makeJob({
     type,
+    node: NODE_BY_TYPE[type],
     targetId,
     pos: { x: 1, y: 2, roomName: "sim" },
     tier: "medium",
@@ -57,16 +59,16 @@ describe("Board registry (AC3)", () => {
     addJob(makeTestJob("build", "site1"));
     addJob(makeTestJob("upgrade", "controller1"));
     expect(getBoard()?.jobs).toHaveLength(3);
-    expect(getBoard()?.jobs[0].id).toBe("fill:spawn1");
-    expect(getBoard()?.jobs[1].id).toBe("build:site1");
-    expect(getBoard()?.jobs[2].id).toBe("upgrade:controller1");
+    expect(getBoard()?.jobs[0].id).toBe("fill:spawns:spawn1");
+    expect(getBoard()?.jobs[1].id).toBe("build:build:site1");
+    expect(getBoard()?.jobs[2].id).toBe("upgrade:upgrade:controller1");
   });
 
   it("findJob returns the correct job by id", () => {
     const job = makeTestJob("mine", "source1");
     addJob(job);
-    expect(findJob("mine:source1")).toEqual(job);
-    expect(findJob("mine:nonexistent" as JobId)).toBeUndefined();
+    expect(findJob("mine:mines:source1")).toEqual(job);
+    expect(findJob("mine:mines:nonexistent" as JobId)).toBeUndefined();
   });
 
   it("addJob throws if board not initialized", async () => {
@@ -77,6 +79,7 @@ describe("Board registry (AC3)", () => {
       addJob(
         makeJob({
           type: "fill",
+          node: "spawns",
           targetId: "spawn1",
           pos: { x: 1, y: 2, roomName: "sim" },
           tier: "critical",
@@ -105,8 +108,8 @@ describe("Board registry (AC3)", () => {
     const board = getBoard();
     expect(board).toBeDefined();
     expect(board?.jobs).toHaveLength(0);
-    expect(findJob("fill:spawn1")).toBeUndefined();
-    expect(findJob("build:site1")).toBeUndefined();
-    expect(findJob("upgrade:controller1")).toBeUndefined();
+    expect(findJob("fill:spawns:spawn1")).toBeUndefined();
+    expect(findJob("build:build:site1")).toBeUndefined();
+    expect(findJob("upgrade:upgrade:controller1")).toBeUndefined();
   });
 });

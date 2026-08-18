@@ -49,8 +49,12 @@ describe("produceMine", () => {
       snapshot([source("src1"), source("src2")], "specialist"),
     );
     expect(jobs).toHaveLength(2);
-    expect(jobs.map((j) => j.id)).toEqual(["mine:src1", "mine:src2"]);
+    expect(jobs.map((j) => j.id)).toEqual([
+      "mine:mines:src1",
+      "mine:mines:src2",
+    ]);
     expect(jobs[0].type).toBe("mine");
+    expect(jobs[0].node).toBe("mines");
     expect(jobs[0].tier).toBe("high");
     expect(jobs[0].maxWorkers).toBe(1);
     expect(jobs[0].assignmentMode).toBe("reserved");

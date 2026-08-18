@@ -15,6 +15,7 @@ export function produceUpgrade(snapshot: WorldSnapshot): Job[] {
   return [
     makeJob({
       type: "upgrade",
+      node: "upgrade",
       targetId: controller.id,
       pos: controller.pos,
       tier: policy.tier,

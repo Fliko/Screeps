@@ -14,6 +14,7 @@ export function produceMine(snapshot: WorldSnapshot): Job[] {
   return snapshot.sources.map((source) =>
     makeJob({
       type: "mine",
+      node: "mines",
       targetId: source.id,
       pos: source.pos,
       tier: policy.tier,

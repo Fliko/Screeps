@@ -54,7 +54,7 @@ export function getBoard(): Board | undefined {
 }
 
 /**
- * Convenience lookup: finds a Job by its id (type:targetId grammar, AD-4).
+ * Convenience lookup: finds a Job by its id (type:node:targetId grammar, AD-4/AD-11).
  * Returns undefined if no Job with that id is on the current Board.
  * Used later by validators (Story 3.1+) and Matching (Story 3.4).
  */

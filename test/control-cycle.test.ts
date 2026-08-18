@@ -213,9 +213,9 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
       createMockGame(
         () => 0,
         [
-          createCreep("c1", "fill:spawn1"),
-          createCreep("c2", "fill:spawn1"),
-          createCreep("c3", "build:site1"),
+          createCreep("c1", "fill:spawns:spawn1"),
+          createCreep("c2", "fill:spawns:spawn1"),
+          createCreep("c3", "build:build:site1"),
           createCreep("c4"),
         ],
       ),
@@ -226,8 +226,8 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
     loop();
 
     const taken = validateSpy.mock.calls[0]?.[0] as TakenSet;
-    expect(getTakenCount(taken, "fill:spawn1")).toBe(2);
-    expect(getTakenCount(taken, "build:site1")).toBe(1);
+    expect(getTakenCount(taken, "fill:spawns:spawn1")).toBe(2);
+    expect(getTakenCount(taken, "build:build:site1")).toBe(1);
     expect(taken.entries.size).toBe(2);
   });
 
@@ -235,7 +235,7 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
     setGame(
       createMockGame(
         () => 0,
-        [createCreep("spawning1", "mine:source1", 0, true)],
+        [createCreep("spawning1", "mine:mines:source1", 0, true)],
       ),
     );
     const validateSpy = vi.spyOn(validateModule, "validate");
@@ -244,34 +244,37 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
     loop();
 
     const taken = validateSpy.mock.calls[0]?.[0] as TakenSet;
-    expect(getTakenCount(taken, "mine:source1")).toBe(1);
+    expect(getTakenCount(taken, "mine:mines:source1")).toBe(1);
   });
 
   it("recomputes the taken-set each Tick, carrying nothing over (AC4)", async () => {
     const validateSpy = vi.spyOn(validateModule, "validate");
     const { loop } = await import("../src/main");
 
-    setGame(createMockGame(() => 0, [createCreep("c1", "fill:spawn1")]));
+    setGame(createMockGame(() => 0, [createCreep("c1", "fill:spawns:spawn1")]));
     loop();
-    setGame(createMockGame(() => 0, [createCreep("c2", "build:site1")]));
+    setGame(createMockGame(() => 0, [createCreep("c2", "build:build:site1")]));
     loop();
 
     const first = validateSpy.mock.calls[0]?.[0] as TakenSet;
     const second = validateSpy.mock.calls[1]?.[0] as TakenSet;
-    expect(getTakenCount(first, "fill:spawn1")).toBe(1);
-    expect(getTakenCount(second, "fill:spawn1")).toBe(0);
-    expect(getTakenCount(second, "build:site1")).toBe(1);
+    expect(getTakenCount(first, "fill:spawns:spawn1")).toBe(1);
+    expect(getTakenCount(second, "fill:spawns:spawn1")).toBe(0);
+    expect(getTakenCount(second, "build:build:site1")).toBe(1);
   });
 
   it("releases Contracts cleared by validate before match reads capacity", async () => {
     setGame(
       createMockGame(
         () => 0,
-        [createCreep("c1", "fill:spawn1"), createCreep("c2", "fill:spawn1")],
+        [
+          createCreep("c1", "fill:spawns:spawn1"),
+          createCreep("c2", "fill:spawns:spawn1"),
+        ],
       ),
     );
     vi.spyOn(validateModule, "validate").mockReturnValue([
-      { jobId: "fill:spawn1" },
+      { jobId: "fill:spawns:spawn1" },
     ]);
     const matchSpy = vi.spyOn(matchModule, "match");
 
@@ -279,12 +282,12 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
     loop();
 
     const taken = matchSpy.mock.calls[0]?.[0] as TakenSet;
-    expect(getTakenCount(taken, "fill:spawn1")).toBe(1);
+    expect(getTakenCount(taken, "fill:spawns:spawn1")).toBe(1);
   });
 
   it("clears a Contract whose target is absent and releases it before match", async () => {
     // No structures in the mock room, so the fill Job is not on this Tick's Board.
-    const creep = createCreep("c1", "fill:spawn1");
+    const creep = createCreep("c1", "fill:spawns:spawn1");
     setGame(createMockGame(() => 0, [creep]));
     const validateSpy = vi.spyOn(validateModule, "validate");
     const matchSpy = vi.spyOn(matchModule, "match");
@@ -294,10 +297,10 @@ describe("Control Cycle - Taken-Set Wiring (AC5)", () => {
 
     // The Contract was counted when validate ran...
     const beforeRelease = validateSpy.mock.calls[0]?.[0] as TakenSet;
-    expect(getTakenCount(beforeRelease, "fill:spawn1")).toBe(1);
+    expect(getTakenCount(beforeRelease, "fill:spawns:spawn1")).toBe(1);
     // ...and released by the time match reads capacity.
     const afterRelease = matchSpy.mock.calls[0]?.[0] as TakenSet;
-    expect(getTakenCount(afterRelease, "fill:spawn1")).toBe(0);
+    expect(getTakenCount(afterRelease, "fill:spawns:spawn1")).toBe(0);
     // The real Creep's memory was mutated, not just the reported taken-set.
     expect(creep.memory.contract).toBeUndefined();
   });
@@ -389,7 +392,7 @@ describe("Control Cycle - Match Wiring (Story 3.4)", () => {
       // being farther from the Job than c2.
       expect(winner.id).toBe("c1");
       expect((winner.memory as { contract?: string }).contract).toBe(
-        "fill:spawn1",
+        "fill:spawns:spawn1",
       );
     } finally {
       config.setConstant("JOB_POLICY_TABLE", originalPolicy);

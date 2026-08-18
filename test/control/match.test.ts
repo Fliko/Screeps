@@ -10,6 +10,7 @@ import { setGame } from "../../src/game";
 import type { SnapshotCreep } from "../../src/world/snapshot";
 import * as snapshotModule from "../../src/world/snapshot";
 import { buildWorldSnapshot } from "../../src/world/snapshot";
+import { NODE_BY_TYPE } from "../helpers/node-fixtures";
 
 const EMPTY_TAKEN_SET = deriveTakenSet([]);
 
@@ -61,6 +62,7 @@ function makeTestJob(
 ): Job {
   return makeJob({
     type,
+    node: NODE_BY_TYPE[type],
     targetId,
     pos: { x: overrides.x ?? 5, y: overrides.y ?? 5, roomName: "sim" },
     tier: overrides.tier ?? "critical",
@@ -262,13 +264,13 @@ describe("match — I/O matrix", () => {
   });
 
   it("never touches a Creep that already holds a valid Contract", () => {
-    const creep = createCreep("c1", "build:site1");
+    const creep = createCreep("c1", "build:build:site1");
     const job = makeTestJob("fill", "spawn1");
     stage([creep], [job]);
 
     match(EMPTY_TAKEN_SET);
 
-    expect(creep.memory.contract).toBe("build:site1");
+    expect(creep.memory.contract).toBe("build:build:site1");
   });
 
   it("does nothing when there is no snapshot", () => {

@@ -14,9 +14,9 @@ import { makeJobId, parseJobId } from "../board/job";
 /**
  * The persisted Contract state stored in `creep.memory.contract`.
  *
- * AD-4: a Contract is exactly the Job id string `type:targetId`. This typed
- * wrapper lets consumers pass and receive a structured object while memory
- * stores only the compact Job id.
+ * AD-4/AD-11: a Contract is exactly the Job id string `type:node:targetId`.
+ * This typed wrapper lets consumers pass and receive a structured object
+ * while memory stores only the compact Job id.
  */
 export interface ContractState {
   jobId: JobId;
@@ -48,14 +48,14 @@ export function getContract(creep: {
  * Persists a Contract to `creep.memory.contract`.
  *
  * The Job id is canonicalized through `parseJobId`/`makeJobId` so the stored
- * string always follows the `type:targetId` grammar.
+ * string always follows the `type:node:targetId` grammar.
  */
 export function setContract(
   creep: { memory: { contract?: string } },
   contract: ContractState,
 ): void {
-  const { type, targetId } = parseJobId(contract.jobId);
-  creep.memory.contract = makeJobId(type, targetId);
+  const { type, node, targetId } = parseJobId(contract.jobId);
+  creep.memory.contract = makeJobId(type, node, targetId);
 }
 
 /**

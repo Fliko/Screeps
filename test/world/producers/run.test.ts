@@ -98,9 +98,9 @@ describe("runProducers", () => {
     runTick();
     const jobs = getBoard()?.jobs ?? [];
     expect(jobs.map((j) => j.id)).toEqual([
-      "fill:ext1",
-      "build:site1",
-      "upgrade:controller1",
+      "fill:extensions:ext1",
+      "build:build:site1",
+      "upgrade:upgrade:controller1",
     ]);
   });
 
@@ -120,7 +120,7 @@ describe("runProducers", () => {
     });
     runTick();
     const jobs = getBoard()?.jobs ?? [];
-    const fillJob = jobs.find((j) => j.id === "fill:ext1");
+    const fillJob = jobs.find((j) => j.id === "fill:extensions:ext1");
     expect(fillJob).toBeDefined();
     expect(fillJob?.tier).toBe("high");
     expect(fillJob?.maxWorkers).toBe(2);
@@ -142,6 +142,7 @@ describe("runProducers", () => {
     addJob(
       makeJob({
         type: "fill",
+        node: "extensions",
         targetId: "ext1",
         pos: { x: 1, y: 1, roomName: "sim" },
         tier: "critical",

@@ -78,29 +78,29 @@ describe("assignCreepContract", () => {
     const creep = { id: "c1", memory: {} };
     setGame(createMockGame(() => creep));
 
-    expect(assignCreepContract("c1", "fill:spawn1")).toBe(true);
-    expect(creep.memory).toEqual({ contract: "fill:spawn1" });
+    expect(assignCreepContract("c1", "fill:spawns:spawn1")).toBe(true);
+    expect(creep.memory).toEqual({ contract: "fill:spawns:spawn1" });
   });
 
   it("overwrites an existing Contract when resolved", () => {
-    const creep = { id: "c1", memory: { contract: "build:site1" } };
+    const creep = { id: "c1", memory: { contract: "build:build:site1" } };
     setGame(createMockGame(() => creep));
 
-    expect(assignCreepContract("c1", "fill:spawn1")).toBe(true);
-    expect(creep.memory.contract).toBe("fill:spawn1");
+    expect(assignCreepContract("c1", "fill:spawns:spawn1")).toBe(true);
+    expect(creep.memory.contract).toBe("fill:spawns:spawn1");
   });
 
   it("returns false when the id resolves to nothing", () => {
     setGame(createMockGame(() => undefined));
 
-    expect(assignCreepContract("gone", "fill:spawn1")).toBe(false);
+    expect(assignCreepContract("gone", "fill:spawns:spawn1")).toBe(false);
   });
 
   it("returns false when the id resolves to an object without memory", () => {
     const notACreep = { id: "s1", structureType: "spawn" };
     setGame(createMockGame(() => notACreep));
 
-    expect(assignCreepContract("s1", "fill:spawn1")).toBe(false);
+    expect(assignCreepContract("s1", "fill:spawns:spawn1")).toBe(false);
     expect(notACreep).toEqual({ id: "s1", structureType: "spawn" });
   });
 });

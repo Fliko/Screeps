@@ -6,11 +6,13 @@ import {
   hasReservedVacancy,
 } from "../../src/control/evolution";
 import { deriveTakenSet } from "../../src/control/taken";
+import { PULLED_NODE_BY_TYPE } from "../helpers/node-fixtures";
 
 function createMineJob(targetId: string): Job {
   return {
-    id: makeJobId("mine", targetId),
+    id: makeJobId("mine", "mines", targetId),
     type: "mine",
+    node: "mines",
     targetId,
     pos: { x: 0, y: 0, roomName: "sim" },
     tier: "high",
@@ -26,9 +28,11 @@ function createPulledJob(
   type: "fill" | "build" | "upgrade",
   targetId: string,
 ): Job {
+  const node = PULLED_NODE_BY_TYPE[type];
   return {
-    id: makeJobId(type, targetId),
+    id: makeJobId(type, node, targetId),
     type,
+    node,
     targetId,
     pos: { x: 0, y: 0, roomName: "sim" },
     tier: "critical",

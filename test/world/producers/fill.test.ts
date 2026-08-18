@@ -44,8 +44,9 @@ describe("produceFill", () => {
       snapshot([structure("ext1", "extension", 25, 50)]),
     );
     expect(jobs).toHaveLength(1);
-    expect(jobs[0].id).toBe("fill:ext1");
+    expect(jobs[0].id).toBe("fill:extensions:ext1");
     expect(jobs[0].type).toBe("fill");
+    expect(jobs[0].node).toBe("extensions");
     expect(jobs[0].tier).toBe("critical");
     expect(jobs[0].maxWorkers).toBe(
       getConstant("JOB_POLICY_TABLE").fill.maxWorkers,
@@ -64,10 +65,23 @@ describe("produceFill", () => {
     );
     expect(jobs).toHaveLength(3);
     expect(jobs.map((j) => j.id)).toEqual([
-      "fill:ext1",
-      "fill:ext2",
-      "fill:spawn1",
+      "fill:extensions:ext1",
+      "fill:extensions:ext2",
+      "fill:spawns:spawn1",
     ]);
+  });
+
+  it("tags Spawn targets with node 'spawns' and Extension targets with node 'extensions'", () => {
+    const jobs = produceFill(
+      snapshot([
+        structure("spawn1", "spawn", 100, 300),
+        structure("ext1", "extension", 10, 50),
+      ]),
+    );
+    const spawnJob = jobs.find((j) => j.targetId === "spawn1");
+    const extJob = jobs.find((j) => j.targetId === "ext1");
+    expect(spawnJob?.node).toBe("spawns");
+    expect(extJob?.node).toBe("extensions");
   });
 
   it("skips full structures", () => {

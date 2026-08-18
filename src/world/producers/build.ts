@@ -17,6 +17,7 @@ export function produceBuild(snapshot: WorldSnapshot): Job[] {
   return snapshot.constructionSites.map((site) =>
     makeJob({
       type: "build",
+      node: "build",
       targetId: site.id,
       pos: site.pos,
       tier: policy.tier,

@@ -128,7 +128,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(source.pos, expect.anything());
@@ -151,7 +151,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.harvest).toHaveBeenCalledWith(source);
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -182,7 +182,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.harvest).toHaveBeenCalledWith(nearSource);
   });
@@ -192,7 +192,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     setGame(createMockGame((id) => (id === "creep1" ? creep : undefined), []));
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.harvest).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -208,7 +208,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.harvest).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -235,7 +235,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:build]"),
@@ -266,7 +266,7 @@ describe("runBuild — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -283,7 +283,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.build).toHaveBeenCalledWith(site);
     expect(creep.harvest).not.toHaveBeenCalled();
@@ -299,7 +299,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(site.pos, expect.anything());
@@ -316,7 +316,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.build).toHaveBeenCalledWith(site);
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -327,7 +327,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     setGame(createMockGame((id) => (id === "creep1" ? creep : undefined)));
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(creep.build).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -348,7 +348,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:build]"),
@@ -373,7 +373,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -393,7 +393,7 @@ describe("runBuild — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runBuild("creep1", "build:site1");
+    runBuild("creep1", "build:build:site1");
 
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -404,6 +404,6 @@ describe("runBuild — Creep unreachable", () => {
     setGame(createMockGame(() => undefined));
     buildWorldSnapshot();
 
-    expect(() => runBuild("gone", "build:site1")).not.toThrow();
+    expect(() => runBuild("gone", "build:build:site1")).not.toThrow();
   });
 });

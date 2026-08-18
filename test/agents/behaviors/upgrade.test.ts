@@ -133,7 +133,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(source.pos, expect.anything());
@@ -156,7 +156,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.harvest).toHaveBeenCalledWith(source);
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -187,7 +187,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.harvest).toHaveBeenCalledWith(nearSource);
   });
@@ -197,7 +197,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     setGame(createMockGame((id) => (id === "creep1" ? creep : undefined), []));
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.harvest).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -213,7 +213,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.harvest).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -240,7 +240,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:upgrade]"),
@@ -271,7 +271,7 @@ describe("runUpgrade — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -288,7 +288,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.upgradeController).toHaveBeenCalledWith(controller);
     expect(creep.harvest).not.toHaveBeenCalled();
@@ -304,7 +304,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(
@@ -324,7 +324,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.upgradeController).toHaveBeenCalledWith(controller);
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -335,7 +335,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     setGame(createMockGame((id) => (id === "creep1" ? creep : undefined)));
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(creep.upgradeController).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -356,7 +356,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:upgrade]"),
@@ -381,7 +381,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining(String(ERR_INVALID_TARGET_CODE)),
@@ -403,7 +403,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining(String(ERR_NOT_ENOUGH_RESOURCES_CODE)),
@@ -425,7 +425,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining(String(ERR_NO_BODYPART_CODE)),
@@ -447,7 +447,7 @@ describe("runUpgrade — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runUpgrade("creep1", "upgrade:controller1");
+    runUpgrade("creep1", "upgrade:upgrade:controller1");
 
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -458,6 +458,8 @@ describe("runUpgrade — Creep unreachable", () => {
     setGame(createMockGame(() => undefined));
     buildWorldSnapshot();
 
-    expect(() => runUpgrade("gone", "upgrade:controller1")).not.toThrow();
+    expect(() =>
+      runUpgrade("gone", "upgrade:upgrade:controller1"),
+    ).not.toThrow();
   });
 });

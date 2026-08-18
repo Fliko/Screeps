@@ -33,8 +33,9 @@ describe("produceUpgrade", () => {
   it("always posts the upgrade Job when a Controller exists", () => {
     const jobs = produceUpgrade(snapshotWithController(controller()));
     expect(jobs).toHaveLength(1);
-    expect(jobs[0].id).toBe("upgrade:controller1");
+    expect(jobs[0].id).toBe("upgrade:upgrade:controller1");
     expect(jobs[0].type).toBe("upgrade");
+    expect(jobs[0].node).toBe("upgrade");
     expect(jobs[0].tier).toBe("low");
     expect(jobs[0].maxWorkers).toBe(Infinity);
     expect(jobs[0].assignmentMode).toBe("pulled");

@@ -126,7 +126,7 @@ describe("runFill — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(source.pos, expect.anything());
@@ -149,7 +149,7 @@ describe("runFill — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.harvest).toHaveBeenCalledWith(source);
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -180,7 +180,7 @@ describe("runFill — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.harvest).toHaveBeenCalledWith(nearSource);
   });
@@ -190,7 +190,7 @@ describe("runFill — sourcing (empty carry)", () => {
     setGame(createMockGame((id) => (id === "creep1" ? creep : undefined), []));
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.harvest).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -206,7 +206,7 @@ describe("runFill — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.harvest).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -233,7 +233,7 @@ describe("runFill — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:fill]"),
@@ -264,7 +264,7 @@ describe("runFill — sourcing (empty carry)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(console.log).not.toHaveBeenCalled();
   });
@@ -281,7 +281,7 @@ describe("runFill — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.transfer).toHaveBeenCalledWith(
       structure,
@@ -300,7 +300,7 @@ describe("runFill — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.moveTo).toHaveBeenCalledTimes(1);
     expect(creep.moveTo).toHaveBeenCalledWith(structure.pos, expect.anything());
@@ -317,7 +317,7 @@ describe("runFill — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.transfer).toHaveBeenCalledWith(
       structure,
@@ -331,7 +331,7 @@ describe("runFill — serving (nonzero carry, anti-ping-pong)", () => {
     setGame(createMockGame((id) => (id === "creep1" ? creep : undefined)));
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(creep.transfer).not.toHaveBeenCalled();
     expect(creep.moveTo).not.toHaveBeenCalled();
@@ -354,7 +354,7 @@ describe("runFill — serving (nonzero carry, anti-ping-pong)", () => {
     );
     buildWorldSnapshot();
 
-    runFill("creep1", "fill:spawn1");
+    runFill("creep1", "fill:spawns:spawn1");
 
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining("[behavior:fill]"),
@@ -370,6 +370,6 @@ describe("runFill — Creep unreachable", () => {
     setGame(createMockGame(() => undefined));
     buildWorldSnapshot();
 
-    expect(() => runFill("gone", "fill:spawn1")).not.toThrow();
+    expect(() => runFill("gone", "fill:spawns:spawn1")).not.toThrow();
   });
 });

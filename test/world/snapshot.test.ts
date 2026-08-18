@@ -111,7 +111,7 @@ describe("buildWorldSnapshot", () => {
             ttl: 100,
             carry: 25,
             carryCapacity: 50,
-            memory: { contract: "fill:site1" },
+            memory: { contract: "fill:spawns:site1" },
           },
         ],
       }),
@@ -166,7 +166,7 @@ describe("buildWorldSnapshot", () => {
       carryCapacity: 50,
       // The adapter stub omits `spawning`; mapCreep normalizes it to false.
       spawning: false,
-      contract: "fill:site1",
+      contract: "fill:spawns:site1",
     });
   });
 
@@ -182,7 +182,7 @@ describe("buildWorldSnapshot", () => {
             carry: 0,
             carryCapacity: 50,
             spawning: true,
-            memory: { contract: "fill:site1" },
+            memory: { contract: "fill:spawns:site1" },
           },
         ],
       }),

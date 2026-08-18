@@ -35,8 +35,12 @@ describe("produceBuild", () => {
   it("emits one build Job per construction site", () => {
     const jobs = produceBuild(snapshot([site("site1"), site("site2")]));
     expect(jobs).toHaveLength(2);
-    expect(jobs.map((j) => j.id)).toEqual(["build:site1", "build:site2"]);
+    expect(jobs.map((j) => j.id)).toEqual([
+      "build:build:site1",
+      "build:build:site2",
+    ]);
     expect(jobs[0].type).toBe("build");
+    expect(jobs[0].node).toBe("build");
     expect(jobs[0].tier).toBe("medium");
     expect(jobs[0].maxWorkers).toBe(1);
     expect(jobs[0].assignmentMode).toBe("pulled");

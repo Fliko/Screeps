@@ -37,6 +37,15 @@
 - Contracts naming a `jobId` that is absent from this Tick's Board are still counted toward capacity [src/control/taken.ts:102] — deferred to Story 3.3, which owns validators and clears invalid Contracts per FR-9.
 - `hasCapacity` is only tested against locally-built Jobs, never against Jobs produced by `world/producers/` from `JOB_POLICY_TABLE` [test/control/taken.test.ts] — deferred to Story 3.4, where Matching becomes the first production consumer.
 
+## Deferred from: code review of story 2 (spec-screeps_ai, 2026-08-17)
+
+- source_spec: `_bmad-output/specs/spec-screeps_ai/stories/2-node-tagging-and-amended-job-contract-id-grammar.md`
+  summary: `src/board/job.ts`'s "exact field order per ARCHITECTURE-SPINE.md L102" comment still cites the frozen Stage-1 spine path instead of the amended Stage-2 spine that documents AD-11 (`node`) and the still-pending AD-7 amendment (`priority` replacing `tier`/`withinTierPriority`).
+  evidence: Pre-existing comment, unmodified by this story's diff — not caused by Story 2, but now more stale than before since the field order it describes has diverged further from the cited doc.
+- source_spec: `_bmad-output/specs/spec-screeps_ai/stories/2-node-tagging-and-amended-job-contract-id-grammar.md`
+  summary: `NodeName`'s literal union (`src/board/job.ts`) and its runtime `NODE_NAMES` validation array are two hand-maintained lists with nothing tying them together, so adding a Node to the type without updating the array compiles cleanly but silently rejects that Node's ids at runtime.
+  evidence: Mirrors the pre-existing `JobType`/`JOB_TYPES` pattern already in the file before Story 2 — Story 2 followed established convention rather than introducing a new one; fixing both together is a cross-cutting refactor out of this story's scope.
+
 
 ## Deferred from: code review of story 3.3 (2026-08-13)
 
